@@ -185,6 +185,7 @@
         }
 
         .average-score { color: var(--neon-blue); }
+        .gpa-score { color: #4ade80; }
         .highest-score { color: var(--neon-green); }
         .lowest-score { color: var(--neon-orange); }
         .total-subjects { color: var(--neon-purple); }
@@ -625,6 +626,10 @@
     <div class="container">
         <!-- Enhanced Stats Overview -->
         <section class="stats-overview loading" id="stats-overview">
+            <div class="stat-card glow-blue">
+                <div class="stat-value gpa-score" id="gpa-score">3.6</div>
+                <div class="stat-label">GPA（4.0制）</div>
+            </div>
             <div class="stat-card glow-blue">
                 <div class="stat-value average-score" id="average-score">89</div>
                 <div class="stat-label">总体平均分</div>
