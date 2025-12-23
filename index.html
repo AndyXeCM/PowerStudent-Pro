@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PowerStudent Pro - 智能成绩监视系统</title>
+    
+    <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/typed.js/2.0.12/typed.min.js"></script>
+    <script src="https://unpkg.com/splitting@1.0.6/dist/splitting.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/splitting@1.0.6/dist/splitting.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0e27;
+            --bg-secondary: #1a1f3a;
+            --bg-card: rgba(26, 31, 58, 0.6);
+            --neon-blue: #00d4ff;
+            --neon-green: #00ff88;
+            --neon-purple: #8b5cf6;
+            --neon-orange: #ff6b35;
+            --neon-red: #ff4757;
+            --text-primary: #ffffff;
+            --text-secondary: #c8d6e5;
+            --text-muted: #8395a7;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Background Canvas */
+        #background-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+        }
+
+        /* Header */
+        .header {
+            position: relative;
+            padding: 2rem 0;
+            text-align: center;
+            background: linear-gradient(135deg, rgba(10, 14, 39, 0.9), rgba(26, 31, 58, 0.8));
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .main-title {
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(2rem, 5vw, 4rem);
+            font-weight: 900;
+            background: linear-gradient(45deg, var(--neon-blue), var(--neon-green), var(--neon-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            font-weight: 300;
+            letter-spacing: 2px;
+        }
+
+        .user-info {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid var(--neon-blue);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+        }
+
+        .user-text {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+        }
+
+        .user-school {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.2rem;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Enhanced Stats Overview */
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-green));
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0, 212, 255, 0.2);
+            border-color: var(--neon-blue);
+        }
+
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .average-score { color: var(--neon-blue); }
+        .highest-score { color: var(--neon-green); }
+        .lowest-score { color: var(--neon-orange); }
+        .total-subjects { color: var(--neon-purple); }
+        .improvement-rate { color: #00a8ff; }
+        .consistency-score { color: #a855f7; }
+
+        /* Radar Chart Section - 最重要的图表放在前面 */
+        .radar-section {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 3rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .radar-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            text-align: center;
+            color: var(--neon-blue);
+        }
+
+        .radar-container {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .radar-chart {
+            height: 500px;
+        }
+
+        .radar-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .radar-stat-item {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1.5rem;
+            border-radius: 15px;
+            border-left: 4px solid var(--neon-blue);
+        }
+
+        .radar-stat-label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+
+        .radar-stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--neon-green);
+        }
+
+        /* Performance Overview */
+        .performance-overview {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 3rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .overview-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            text-align: center;
+            color: var(--neon-blue);
+        }
+
+        .overview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+        }
+
+        .overview-item {
+            text-align: center;
+            padding: 1.5rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .overview-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .overview-label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Comparison Section */
+        .comparison-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .comparison-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .comparison-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            color: var(--neon-blue);
+        }
+
+        .comparison-chart {
+            height: 300px;
+        }
+
+        /* Enhanced Subjects Grid */
+        .subjects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .subject-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .subject-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-green), var(--neon-purple));
+        }
+
+        .subject-card:hover {
+            transform: translateY(-8px) rotateX(5deg);
+            box-shadow: 0 25px 50px rgba(0, 212, 255, 0.3);
+            border-color: var(--neon-blue);
+        }
+
+        .subject-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .subject-name {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .subject-grade {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2rem;
+            font-weight: 900;
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid;
+        }
+
+        .grade-aplus { color: var(--neon-green); border-color: var(--neon-green); }
+        .grade-a { color: var(--neon-blue); border-color: var(--neon-blue); }
+        .grade-aminus { color: #00a8ff; border-color: #00a8ff; }
+        .grade-bplus { color: var(--neon-purple); border-color: var(--neon-purple); }
+        .grade-b { color: #a855f7; border-color: #a855f7; }
+
+        .subject-score {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .score-excellent { color: var(--neon-green); }
+        .score-good { color: var(--neon-blue); }
+        .score-average { color: var(--neon-purple); }
+        .score-poor { color: var(--neon-orange); }
+
+        .subject-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        .exam-count {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .trend-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .trend-up { color: var(--neon-green); }
+        .trend-down { color: var(--neon-red); }
+        .trend-stable { color: var(--text-muted); }
+
+        /* Enhanced Charts Section */
+        .charts-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .chart-container {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .chart-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            color: var(--neon-blue);
+        }
+
+        .chart {
+            height: 300px;
+        }
+
+        /* Navigation */
+        .navigation {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .nav-button {
+            padding: 1rem 2rem;
+            background: var(--glass-bg);
+            border: 2px solid var(--glass-border);
+            border-radius: 15px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-family: 'Orbitron', monospace;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .nav-button:hover::before {
+            left: 100%;
+        }
+
+        .nav-button:hover {
+            border-color: var(--neon-blue);
+            background: rgba(0, 212, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
+            transform: translateY(-3px);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            border-top: 1px solid var(--glass-border);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .user-info {
+                position: static;
+                margin-top: 1rem;
+                justify-content: center;
+            }
+            
+            .stats-overview {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 1rem;
+            }
+            
+            .radar-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .radar-chart {
+                height: 400px;
+            }
+            
+            .subjects-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .comparison-section {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .charts-section {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .navigation {
+                flex-direction: column;
+                align-items: center;
+                gap: 1rem;
+            }
+        }
+
+        /* Loading Animation */
+        .loading {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .loaded {
+            opacity: 1;
+            transform: translateY(0);
+            transition: all 0.6s ease;
+        }
+
+        /* Glow Effects */
+        .glow-blue {
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+        }
+
+        .glow-green {
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.3);
+        }
+
+        .glow-purple {
+            box-shadow: 0 0 30px rgba(139, 92, 246, 0.3);
+        }
+
+        /* Pulse Animation */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        /* Floating Animation */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .float {
+            animation: float 3s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Canvas -->
+    <div id="background-canvas"></div>
+
+    <!-- Header -->
+    <header class="header">
+        <h1 class="main-title pulse">PowerStudent Pro</h1>
+        <p class="subtitle">智能成绩监视与分析系统</p>
+        
+        <div class="user-info">
+            <img src="resources/avatar.png" alt="User Avatar" class="user-avatar">
+            <div class="user-text">
+                <div class="user-name">Aoody Xu</div>
+                <div class="user-school">High School Affiliated to South China Normal University</div>
+                <div id="current-time"></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Enhanced Stats Overview -->
+        <section class="stats-overview loading" id="stats-overview">
+            <div class="stat-card glow-blue">
+                <div class="stat-value average-score" id="average-score">89</div>
+                <div class="stat-label">总体平均分</div>
+            </div>
+            <div class="stat-card glow-green">
+                <div class="stat-value highest-score" id="highest-score">95</div>
+                <div class="stat-label">最高分科目</div>
+            </div>
+            <div class="stat-card glow-purple">
+                <div class="stat-value lowest-score" id="lowest-score">84</div>
+                <div class="stat-label">最低分科目</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value total-subjects" id="total-subjects">9</div>
+                <div class="stat-label">总科目数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value improvement-rate" id="improvement-rate">+5.2%</div>
+                <div class="stat-label">进步率</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value consistency-score" id="consistency-score">92</div>
+                <div class="stat-label">稳定性分数</div>
+            </div>
+        </section>
+
+        <!-- Radar Chart Section - 最重要的图表 -->
+        <section class="radar-section loading" id="radar-section">
+            <h2 class="radar-title">📊 科目能力雷达图</h2>
+            <div class="radar-container">
+                <div id="radar-chart" class="radar-chart"></div>
+                <div class="radar-stats">
+                    <div class="radar-stat-item">
+                        <div class="radar-stat-label">最强科目</div>
+                        <div class="radar-stat-value">生物 95分</div>
+                    </div>
+                    <div class="radar-stat-item">
+                        <div class="radar-stat-label">提升空间</div>
+                        <div class="radar-stat-value">数学 +11分</div>
+                    </div>
+                    <div class="radar-stat-item">
+                        <div class="radar-stat-label">平均等级</div>
+                        <div class="radar-stat-value">A- 优秀</div>
+                    </div>
+                    <div class="radar-stat-item">
+                        <div class="radar-stat-label">稳定性</div>
+                        <div class="radar-stat-value">92分 高</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Performance Overview -->
+        <section class="performance-overview loading" id="performance-overview">
+            <h3 class="overview-title">学业表现概览</h3>
+            <div class="overview-grid">
+                <div class="overview-item">
+                    <div class="overview-value" style="color: var(--neon-green);">7</div>
+                    <div class="overview-label">优秀科目数</div>
+                </div>
+                <div class="overview-item">
+                    <div class="overview-value" style="color: var(--neon-blue);">2</div>
+                    <div class="overview-label">良好科目数</div>
+                </div>
+                <div class="overview-item">
+                    <div class="overview-value" style="color: var(--neon-purple);">89.2</div>
+                    <div class="overview-label">加权平均分</div>
+                </div>
+                <div class="overview-item">
+                    <div class="overview-value" style="color: var(--neon-orange);">15.6</div>
+                    <div class="overview-label">标准差</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Comparison Section -->
+        <section class="comparison-section loading" id="comparison-section">
+            <div class="comparison-card">
+                <h3 class="comparison-title">与平均分对比</h3>
+                <div id="comparison-chart" class="comparison-chart"></div>
+            </div>
+            <div class="comparison-card">
+                <h3 class="comparison-title">成绩分布统计</h3>
+                <div id="distribution-chart" class="comparison-chart"></div>
+            </div>
+        </section>
+
+        <!-- Enhanced Subjects Grid -->
+        <section class="subjects-grid loading" id="subjects-grid">
+            <!-- Subject cards will be dynamically generated -->
+        </section>
+
+        <!-- Enhanced Charts Section -->
+        <section class="charts-section loading" id="charts-section">
+            <div class="chart-container">
+                <h3 class="chart-title">成绩等级分布</h3>
+                <div id="grade-distribution-chart" class="chart"></div>
+            </div>
+            <div class="chart-container">
+                <h3 class="chart-title">各科目总分对比</h3>
+                <div id="subject-comparison-chart" class="chart"></div>
+            </div>
+            <div class="chart-container">
+                <h3 class="chart-title">成绩趋势分析</h3>
+                <div id="trend-analysis-chart" class="chart"></div>
+            </div>
+            <div class="chart-container">
+                <h3 class="chart-title">科目难度分析</h3>
+                <div id="difficulty-analysis-chart" class="chart"></div>
+            </div>
+        </section>
+
+        <!-- Navigation -->
+        <nav class="navigation loading" id="navigation">
+            <a href="charts.html" class="nav-button">详细分析</a>
+            <a href="subject.html" class="nav-button">科目详情</a>
+        </nav>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2025 PowerStudent Pro. All rights reserved.</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="grades_data.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>

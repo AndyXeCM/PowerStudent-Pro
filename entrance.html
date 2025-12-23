@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PowerStudent Pro - 入口</title>
+    
+    <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0e27;
+            --bg-secondary: #1a1f3a;
+            --neon-blue: #00d4ff;
+            --neon-green: #00ff88;
+            --neon-purple: #8b5cf6;
+            --text-primary: #ffffff;
+            --text-secondary: #c8d6e5;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Background Canvas */
+        #background-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+        }
+
+        /* Entrance Container */
+        .entrance-container {
+            text-align: center;
+            z-index: 10;
+            max-width: 800px;
+            padding: 2rem;
+        }
+
+        .main-logo {
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(3rem, 8vw, 6rem);
+            font-weight: 900;
+            background: linear-gradient(45deg, var(--neon-blue), var(--neon-green), var(--neon-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 2rem;
+            text-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { filter: drop-shadow(0 0 20px rgba(0, 212, 255, 0.5)); }
+            to { filter: drop-shadow(0 0 40px rgba(0, 212, 255, 0.8)); }
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            margin-bottom: 3rem;
+            letter-spacing: 2px;
+        }
+
+        .entrance-button {
+            display: inline-block;
+            padding: 1.5rem 4rem;
+            background: linear-gradient(45deg, var(--neon-blue), var(--neon-purple));
+            border: 2px solid var(--neon-blue);
+            border-radius: 50px;
+            color: white;
+            font-family: 'Orbitron', monospace;
+            font-size: 1.3rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .entrance-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .entrance-button:hover::before {
+            left: 100%;
+        }
+
+        .entrance-button:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 20px 40px rgba(0, 212, 255, 0.4);
+            border-color: var(--neon-green);
+        }
+
+        .description {
+            margin-top: 3rem;
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            line-height: 1.8;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .feature-item {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 1.5rem;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .feature-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 212, 255, 0.2);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--neon-blue);
+        }
+
+        .feature-desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* Floating Animation */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .float {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .features {
+                grid-template-columns: 1fr;
+            }
+            
+            .entrance-button {
+                padding: 1.2rem 2.5rem;
+                font-size: 1.1rem;
+            }
+            
+            .main-logo {
+                font-size: 3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Canvas -->
+    <div id="background-canvas"></div>
+
+    <!-- Entrance Container -->
+    <div class="entrance-container float">
+        <h1 class="main-logo">PowerStudent Pro</h1>
+        <p class="subtitle">智能成绩监视与分析系统</p>
+        
+        <a href="index.html" class="entrance-button">
+            点击进入系统
+        </a>
+        
+        <div class="description">
+            <p>欢迎来到 PowerStudent Pro，您的个人学习数据分析平台。</p>
+            <p>通过先进的可视化技术和智能分析算法，为您提供全面的成绩监控和学习建议。</p>
+        </div>
+        
+        <div class="features">
+            <div class="feature-item">
+                <div class="feature-icon">📊</div>
+                <div class="feature-title">实时数据监控</div>
+                <div class="feature-desc">实时跟踪您的学习成绩变化，提供即时反馈</div>
+            </div>
+            
+            <div class="feature-item">
+                <div class="feature-icon">📈</div>
+                <div class="feature-title">智能趋势分析</div>
+                <div class="feature-desc">基于历史数据预测未来表现，制定学习计划</div>
+            </div>
+            
+            <div class="feature-item">
+                <div class="feature-icon">🎯</div>
+                <div class="feature-title">个性化建议</div>
+                <div class="feature-desc">根据您的学习情况提供针对性的改进建议</div>
+            </div>
+            
+            <div class="feature-item">
+                <div class="feature-icon">🔮</div>
+                <div class="feature-title">未来预测</div>
+                <div class="feature-desc">预测下次考试成绩，帮助您设定合理目标</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // 入口页面背景动画
+        const sketch = (p) => {
+            let particles = [];
+            let time = 0;
+
+            p.setup = () => {
+                const canvas = p.createCanvas(p.windowWidth, p.windowHeight);
+                canvas.parent('background-canvas');
+                
+                for (let i = 0; i < 100; i++) {
+                    particles.push({
+                        x: p.random(p.width),
+                        y: p.random(p.height),
+                        vx: p.random(-0.5, 0.5),
+                        vy: p.random(-0.5, 0.5),
+                        size: p.random(2, 6),
+                        opacity: p.random(0.2, 0.8),
+                        hue: p.random(180, 240)
+                    });
+                }
+            };
+
+            p.draw = () => {
+                p.clear();
+                time += 0.01;
+                
+                particles.forEach(particle => {
+                    p.fill(particle.hue, 100, 100, particle.opacity * 255);
+                    p.noStroke();
+                    p.circle(particle.x, particle.y, particle.size);
+                    
+                    particle.x += particle.vx;
+                    particle.y += particle.vy;
+                    
+                    if (particle.x < 0 || particle.x > p.width) particle.vx *= -1;
+                    if (particle.y < 0 || particle.y > p.height) particle.vy *= -1;
+                });
+
+                // 绘制连接线
+                for (let i = 0; i < particles.length; i++) {
+                    for (let j = i + 1; j < particles.length; j++) {
+                        const dist = p.dist(particles[i].x, particles[i].y, particles[j].x, particles[j].y);
+                        if (dist < 150) {
+                            const alpha = (1 - dist / 150) * 50;
+                            p.stroke(particles[i].hue, 100, 100, alpha);
+                            p.strokeWeight(1);
+                            p.line(particles[i].x, particles[i].y, particles[j].x, particles[j].y);
+                        }
+                    }
+                }
+            };
+
+            p.windowResized = () => {
+                p.resizeCanvas(p.windowWidth, p.windowHeight);
+            };
+        };
+
+        new p5(sketch);
+
+        // 入口按钮动画
+        document.addEventListener('DOMContentLoaded', () => {
+            const button = document.querySelector('.entrance-button');
+            
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                
+                // 点击动画
+                anime({
+                    targets: button,
+                    scale: [1, 0.95, 1],
+                    duration: 200,
+                    easing: 'easeOutQuart',
+                    complete: () => {
+                        window.location.href = 'index.html';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

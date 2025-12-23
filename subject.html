@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>科目详情 - PowerStudent Pro</title>
+    
+    <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <script src="https://unpkg.com/splitting@1.0.6/dist/splitting.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/splitting@1.0.6/dist/splitting.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0e27;
+            --bg-secondary: #1a1f3a;
+            --bg-card: rgba(26, 31, 58, 0.6);
+            --neon-blue: #00d4ff;
+            --neon-green: #00ff88;
+            --neon-purple: #8b5cf6;
+            --neon-orange: #ff6b35;
+            --neon-red: #ff4757;
+            --text-primary: #ffffff;
+            --text-secondary: #c8d6e5;
+            --text-muted: #8395a7;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Background Canvas */
+        #background-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+        }
+
+        /* Header */
+        .header {
+            position: relative;
+            padding: 2rem 0;
+            text-align: center;
+            background: linear-gradient(135deg, rgba(10, 14, 39, 0.9), rgba(26, 31, 58, 0.8));
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .main-title {
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 900;
+            background: linear-gradient(45deg, var(--neon-blue), var(--neon-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            font-weight: 300;
+        }
+
+        /* Navigation */
+        .nav-bar {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .nav-button {
+            padding: 0.8rem 1.5rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-family: 'Orbitron', monospace;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-button:hover, .nav-button.active {
+            border-color: var(--neon-blue);
+            background: rgba(0, 212, 255, 0.1);
+            color: var(--text-primary);
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
+        }
+
+        /* Subject Selector */
+        .subject-selector {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .selector-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .selector-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            color: var(--neon-blue);
+        }
+
+        .subject-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .subject-option {
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid var(--glass-border);
+            border-radius: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Orbitron', monospace;
+            font-weight: 600;
+        }
+
+        .subject-option:hover, .subject-option.selected {
+            border-color: var(--neon-blue);
+            background: rgba(0, 212, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
+            transform: translateY(-3px);
+        }
+
+        /* Subject Detail Container */
+        .subject-detail {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: none;
+        }
+
+        .subject-detail.active {
+            display: block;
+        }
+
+        /* Subject Header */
+        .subject-header {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 3rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .subject-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-green), var(--neon-purple));
+        }
+
+        .subject-name {
+            font-family: 'Orbitron', monospace;
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, var(--neon-blue), var(--neon-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subject-grade {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 4rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            padding: 1rem 2rem;
+            border-radius: 20px;
+            display: inline-block;
+            border: 3px solid;
+        }
+
+        .grade-aplus { color: var(--neon-green); border-color: var(--neon-green); }
+        .grade-a { color: var(--neon-blue); border-color: var(--neon-blue); }
+        .grade-aminus { color: #00a8ff; border-color: #00a8ff; }
+        .grade-bplus { color: var(--neon-purple); border-color: var(--neon-purple); }
+        .grade-b { color: #a855f7; border-color: #a855f7; }
+
+        .subject-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .stat-item {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1.5rem;
+            border-radius: 15px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Charts Section */
+        .charts-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .chart-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            color: var(--neon-blue);
+        }
+
+        .chart {
+            height: 350px;
+        }
+
+        /* Exams Timeline */
+        .exams-timeline {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            margin-bottom: 2rem;
+        }
+
+        .timeline-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            text-align: center;
+            color: var(--neon-blue);
+        }
+
+        .timeline-item {
+            display: flex;
+            align-items: center;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            border-left: 4px solid var(--neon-blue);
+            transition: all 0.3s ease;
+        }
+
+        .timeline-item:hover {
+            transform: translateX(10px);
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.2);
+        }
+
+        .timeline-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, var(--neon-blue), var(--neon-green));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1.5rem;
+            font-size: 1.5rem;
+        }
+
+        .timeline-content {
+            flex: 1;
+        }
+
+        .timeline-exam-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .timeline-score {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .timeline-grade {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        /* Analysis Section */
+        .analysis-section {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .analysis-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            text-align: center;
+            color: var(--neon-blue);
+        }
+
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .analysis-card {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1.5rem;
+            border-radius: 15px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .analysis-card h4 {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--neon-green);
+        }
+
+        .analysis-card p {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .subject-name {
+                font-size: 2rem;
+            }
+            
+            .subject-grade {
+                font-size: 3rem;
+            }
+            
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart {
+                height: 300px;
+            }
+            
+            .timeline-item {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .timeline-icon {
+                margin-right: 0;
+                margin-bottom: 1rem;
+            }
+            
+            .nav-bar {
+                flex-wrap: wrap;
+                gap: 1rem;
+            }
+        }
+
+        /* Loading Animation */
+        .loading {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .loaded {
+            opacity: 1;
+            transform: translateY(0);
+            transition: all 0.6s ease;
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Canvas -->
+    <div id="background-canvas"></div>
+
+    <!-- Header -->
+    <header class="header">
+        <h1 class="main-title" data-splitting>科目详情</h1>
+        <p class="subtitle">Subject Details & Performance Analysis</p>
+        
+        <nav class="nav-bar">
+            <a href="index.html" class="nav-button">返回主页</a>
+            <a href="charts.html" class="nav-button">详细分析</a>
+        </nav>
+    </header>
+
+    <!-- Subject Selector -->
+    <section class="subject-selector loading" id="subject-selector">
+        <div class="selector-card">
+            <h3 class="selector-title">选择科目</h3>
+            <div class="subject-grid" id="subject-grid">
+                <!-- Subject options will be dynamically generated -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Subject Detail Container -->
+    <section class="subject-detail" id="subject-detail">
+        <!-- Subject Header -->
+        <div class="subject-header">
+            <h2 class="subject-name" id="detail-subject-name">科目名称</h2>
+            <div class="subject-grade" id="detail-subject-grade">A+</div>
+            <div class="subject-stats" id="subject-stats">
+                <!-- Stats will be dynamically generated -->
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="charts-section">
+            <div class="chart-card">
+                <h3 class="chart-title">成绩变化趋势</h3>
+                <div id="subject-trend-chart" class="chart"></div>
+            </div>
+            <div class="chart-card">
+                <h3 class="chart-title">各次考试对比</h3>
+                <div id="exam-comparison-chart" class="chart"></div>
+            </div>
+        </div>
+
+        <!-- Exams Timeline -->
+        <div class="exams-timeline">
+            <h3 class="timeline-title">考试时间表</h3>
+            <div id="timeline-container">
+                <!-- Timeline items will be dynamically generated -->
+            </div>
+        </div>
+
+        <!-- Analysis Section -->
+        <div class="analysis-section">
+            <h3 class="analysis-title">智能分析</h3>
+            <div class="analysis-grid" id="analysis-grid">
+                <!-- Analysis cards will be dynamically generated -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Scripts -->
+    <script src="grades_data.js"></script>
+    <script>
+        // 科目详情页面逻辑
+        class SubjectDetails {
+            constructor() {
+                this.currentSubject = null;
+                this.charts = {};
+                
+                this.init();
+            }
+
+            init() {
+                this.setupBackground();
+                this.generateSubjectOptions();
+                this.setupAnimations();
+                this.setupInteractions();
+            }
+
+            setupBackground() {
+                const sketch = (p) => {
+                    let waves = [];
+
+                    p.setup = () => {
+                        const canvas = p.createCanvas(p.windowWidth, p.windowHeight);
+                        canvas.parent('background-canvas');
+                        
+                        for (let i = 0; i < 5; i++) {
+                            waves.push({
+                                y: p.height * (0.2 + i * 0.15),
+                                amplitude: p.random(20, 50),
+                                frequency: p.random(0.01, 0.02),
+                                phase: p.random(0, p.TWO_PI),
+                                speed: p.random(0.02, 0.05),
+                                opacity: p.random(0.1, 0.3)
+                            });
+                        }
+                    };
+
+                    p.draw = () => {
+                        p.clear();
+                        
+                        waves.forEach(wave => {
+                            p.stroke(139, 92, 246, wave.opacity * 255);
+                            p.strokeWeight(2);
+                            p.noFill();
+                            
+                            p.beginShape();
+                            for (let x = 0; x <= p.width; x += 5) {
+                                const y = wave.y + Math.sin(x * wave.frequency + wave.phase) * wave.amplitude;
+                                p.vertex(x, y);
+                            }
+                            p.endShape();
+                            
+                            wave.phase += wave.speed;
+                        });
+                    };
+
+                    p.windowResized = () => {
+                        p.resizeCanvas(p.windowWidth, p.windowHeight);
+                    };
+                };
+
+                new p5(sketch);
+            }
+
+            generateSubjectOptions() {
+                const container = document.getElementById('subject-grid');
+                
+                gradesData.subjects.forEach(subject => {
+                    const option = document.createElement('div');
+                    option.className = 'subject-option';
+                    option.textContent = subject.name;
+                    option.dataset.subjectId = subject.id;
+                    
+                    option.addEventListener('click', () => {
+                        this.selectSubject(subject.id);
+                    });
+                    
+                    container.appendChild(option);
+                });
+            }
+
+            selectSubject(subjectId) {
+                // 更新选中状态
+                document.querySelectorAll('.subject-option').forEach(option => {
+                    option.classList.remove('selected');
+                });
+                document.querySelector(`[data-subject-id="${subjectId}"]`).classList.add('selected');
+                
+                // 显示科目详情
+                this.currentSubject = gradesData.subjects.find(s => s.id === subjectId);
+                this.showSubjectDetail();
+            }
+
+            showSubjectDetail() {
+                if (!this.currentSubject) return;
+                
+                const detailSection = document.getElementById('subject-detail');
+                detailSection.classList.add('active');
+                
+                this.updateSubjectHeader();
+                this.createCharts();
+                this.generateTimeline();
+                this.generateAnalysis();
+                
+                // 滚动到详情区域
+                detailSection.scrollIntoView({ behavior: 'smooth' });
+            }
+
+            updateSubjectHeader() {
+                const subject = this.currentSubject;
+                const gradeInfo = getGradeLevel(subject.totalScore);
+                
+                document.getElementById('detail-subject-name').textContent = subject.name;
+                document.getElementById('detail-subject-grade').textContent = gradeInfo.grade;
+                document.getElementById('detail-subject-grade').className = `subject-grade grade-${gradeInfo.grade.toLowerCase().replace('+', 'plus').replace('-', 'minus')}`;
+                
+                // 计算统计数据
+                const scores = subject.exams.map(e => e.score).filter(s => s !== null && s !== undefined);
+                const maxScore = Math.max(...scores);
+                const minScore = Math.min(...scores);
+                const avgScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+                const trend = calculateTrend(scores);
+                
+                const statsContainer = document.getElementById('subject-stats');
+                statsContainer.innerHTML = `
+                    <div class="stat-item">
+                        <div class="stat-value" style="color: var(--neon-blue);">${subject.totalScore}</div>
+                        <div class="stat-label">总分</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" style="color: var(--neon-green);">${maxScore}</div>
+                        <div class="stat-label">最高分</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" style="color: var(--neon-orange);">${minScore}</div>
+                        <div class="stat-label">最低分</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" style="color: var(--neon-purple);">${avgScore}</div>
+                        <div class="stat-label">平均分</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" style="color: var(--neon-green);">${subject.exams.length}</div>
+                        <div class="stat-label">考试次数</div>
+                    </div>
+                `;
+            }
+
+            createCharts() {
+                this.createTrendChart();
+                this.createExamComparisonChart();
+            }
+
+            createTrendChart() {
+                const chartDom = document.getElementById('subject-trend-chart');
+                const chart = echarts.init(chartDom);
+                this.charts.trend = chart;
+
+                const subject = this.currentSubject;
+                const examNames = subject.exams.map(e => e.name);
+                const scores = subject.exams.map(e => e.score);
+
+                const option = {
+                    backgroundColor: 'transparent',
+                    tooltip: {
+                        trigger: 'axis',
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        borderColor: '#00d4ff',
+                        textStyle: { color: '#fff' }
+                    },
+                    grid: {
+                        left: '3%',
+                        right: '4%',
+                        bottom: '3%',
+                        containLabel: true
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: examNames,
+                        axisLine: { lineStyle: { color: '#666' } },
+                        axisLabel: { color: '#fff', rotate: 45 }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        min: 0,
+                        max: 100,
+                        axisLine: { lineStyle: { color: '#666' } },
+                        axisLabel: { color: '#fff' },
+                        splitLine: { lineStyle: { color: '#333' } }
+                    },
+                    series: [
+                        {
+                            type: 'line',
+                            data: scores,
+                            lineStyle: { color: '#00d4ff', width: 3 },
+                            itemStyle: { color: '#00d4ff' },
+                            areaStyle: {
+                                color: {
+                                    type: 'linear',
+                                    x: 0, y: 0, x2: 0, y2: 1,
+                                    colorStops: [
+                                        { offset: 0, color: 'rgba(0, 212, 255, 0.3)' },
+                                        { offset: 1, color: 'rgba(0, 212, 255, 0.05)' }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            type: 'line',
+                            data: new Array(examNames.length).fill(gradesData.averageScore),
+                            lineStyle: { color: '#ff6b35', type: 'dashed', width: 2 },
+                            symbol: 'none',
+                            name: '平均分线'
+                        }
+                    ]
+                };
+
+                chart.setOption(option);
+            }
+
+            createExamComparisonChart() {
+                const chartDom = document.getElementById('exam-comparison-chart');
+                const chart = echarts.init(chartDom);
+                this.charts.examComparison = chart;
+
+                const subject = this.currentSubject;
+                
+                const option = {
+                    backgroundColor: 'transparent',
+                    tooltip: {
+                        trigger: 'axis',
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        borderColor: '#00d4ff',
+                        textStyle: { color: '#fff' }
+                    },
+                    grid: {
+                        left: '3%',
+                        right: '4%',
+                        bottom: '3%',
+                        containLabel: true
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: subject.exams.map(e => e.name),
+                        axisLine: { lineStyle: { color: '#666' } },
+                        axisLabel: { color: '#fff', rotate: 45 }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        min: 0,
+                        max: 100,
+                        axisLine: { lineStyle: { color: '#666' } },
+                        axisLabel: { color: '#fff' },
+                        splitLine: { lineStyle: { color: '#333' } }
+                    },
+                    series: [{
+                        type: 'bar',
+                        data: subject.exams.map(e => ({
+                            value: e.score,
+                            itemStyle: {
+                                color: this.getScoreColor(e.score)
+                            }
+                        })),
+                        barWidth: '60%'
+                    }]
+                };
+
+                chart.setOption(option);
+            }
+
+            generateTimeline() {
+                const container = document.getElementById('timeline-container');
+                container.innerHTML = '';
+                
+                this.currentSubject.exams.forEach((exam, index) => {
+                    const gradeInfo = getGradeLevel(exam.score);
+                    
+                    const timelineItem = document.createElement('div');
+                    timelineItem.className = 'timeline-item';
+                    timelineItem.innerHTML = `
+                        <div class="timeline-icon">${index + 1}</div>
+                        <div class="timeline-content">
+                            <div class="timeline-exam-name">${exam.name}</div>
+                            <div class="timeline-score" style="color: ${gradeInfo.color};">${exam.score} / ${exam.fullScore}</div>
+                            <div class="timeline-grade" style="background: ${gradeInfo.color}20; color: ${gradeInfo.color}; border: 1px solid ${gradeInfo.color};">${gradeInfo.grade}</div>
+                        </div>
+                    `;
+                    
+                    container.appendChild(timelineItem);
+                });
+            }
+
+            generateAnalysis() {
+                const container = document.getElementById('analysis-grid');
+                const subject = this.currentSubject;
+                const scores = subject.exams.map(e => e.score).filter(s => s !== null && s !== undefined);
+                const trend = calculateTrend(scores);
+                
+                // 判断是否需要警告
+                const needsWarning = subject.totalScore < 90;
+                const warningColor = subject.totalScore < 80 ? '#ff4757' : '#ff6b35';
+                const warningText = subject.totalScore < 80 ? '严重不足' : '需要改进';
+                
+                const analyses = [
+                    {
+                        title: '整体表现',
+                        content: needsWarning ? 
+                                `<span style="color: ${warningColor}; font-weight: bold;">Aoody，你的${subject.name}成绩${warningText}！</span> 总分为${subject.totalScore}分，远低于90分目标。` :
+                                `Aoody，你的${subject.name}成绩优秀！总分为${subject.totalScore}分，达到了90分目标。`
+                    },
+                    {
+                        title: '成绩趋势',
+                        content: trend === 'improving' ? 
+                                `Aoody，你的${subject.name}成绩呈现上升趋势，${needsWarning ? '但还需要更加努力才能达到90分目标！' : '继续保持这个势头！'}` :
+                                trend === 'declining' ? 
+                                `<span style="color: #ff4757;">Aoody，你的${subject.name}成绩正在下滑，必须立即采取行动！</span>` :
+                                `Aoody，你的${subject.name}成绩相对稳定，${needsWarning ? '但需要突破90分瓶颈。' : '保持良好状态。'}`
+                    },
+                    {
+                        title: '学习建议',
+                        content: needsWarning ? 
+                                `<span style="color: ${warningColor};">Aoody，你必须加强${subject.name}学习！</span> ${subject.totalScore < 80 ? '你的成绩严重不足，需要每天至少1小时专注练习，寻求老师帮助，多做基础题。' : '你需要加强练习，制定详细学习计划，重点突破薄弱环节。'}` :
+                                `Aoody，你在${subject.name}方面表现优秀！可以挑战更高难度内容，考虑参加竞赛，帮助其他同学。`
+                    }
+                ];
+                
+                container.innerHTML = analyses.map(analysis => `
+                    <div class="analysis-card">
+                        <h4>${analysis.title}</h4>
+                        <p>${analysis.content}</p>
+                    </div>
+                `).join('');
+            }
+
+            getScoreColor(score) {
+                if (score >= 97) return '#00ff88';
+                if (score >= 93) return '#00d4ff';
+                if (score >= 90) return '#00a8ff';
+                if (score >= 87) return '#8b5cf6';
+                if (score >= 84) return '#a855f7';
+                if (score >= 81) return '#c084fc';
+                if (score >= 78) return '#f59e0b';
+                if (score >= 75) return '#f97316';
+                if (score >= 72) return '#fb923c';
+                return '#ef4444';
+            }
+
+            setupAnimations() {
+                // 页面加载动画
+                anime({
+                    targets: '.loading',
+                    opacity: [0, 1],
+                    translateY: [30, 0],
+                    delay: anime.stagger(200),
+                    duration: 800,
+                    easing: 'easeOutQuart'
+                });
+
+                // 标题动画
+                Splitting();
+                anime({
+                    targets: '.main-title .char',
+                    opacity: [0, 1],
+                    translateY: [30, 0],
+                    delay: anime.stagger(50),
+                    duration: 600,
+                    easing: 'easeOutExpo'
+                });
+            }
+
+            setupInteractions() {
+                // 导航按钮悬停效果
+                document.addEventListener('mouseover', (e) => {
+                    if (e.target.matches('.nav-button')) {
+                        anime({
+                            targets: e.target,
+                            scale: [1, 1.05],
+                            duration: 300,
+                            easing: 'easeOutQuart'
+                        });
+                    }
+                });
+
+                document.addEventListener('mouseout', (e) => {
+                    if (e.target.matches('.nav-button')) {
+                        anime({
+                            targets: e.target,
+                            scale: [1.05, 1],
+                            duration: 300,
+                            easing: 'easeOutQuart'
+                        });
+                    }
+                });
+            }
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            new SubjectDetails();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>详细分析 - Academic Monitoring System</title>
+    
+    <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <script src="https://unpkg.com/splitting@1.0.6/dist/splitting.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/splitting@1.0.6/dist/splitting.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0e27;
+            --bg-secondary: #1a1f3a;
+            --bg-card: rgba(26, 31, 58, 0.6);
+            --neon-blue: #00d4ff;
+            --neon-green: #00ff88;
+            --neon-purple: #8b5cf6;
+            --neon-orange: #ff6b35;
+            --neon-red: #ff4757;
+            --text-primary: #ffffff;
+            --text-secondary: #c8d6e5;
+            --text-muted: #8395a7;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Background Canvas */
+        #background-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+        }
+
+        /* Header */
+        .header {
+            position: relative;
+            padding: 2rem 0;
+            text-align: center;
+            background: linear-gradient(135deg, rgba(10, 14, 39, 0.9), rgba(26, 31, 58, 0.8));
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .main-title {
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 900;
+            background: linear-gradient(45deg, var(--neon-blue), var(--neon-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { filter: drop-shadow(0 0 20px rgba(0, 212, 255, 0.5)); }
+            to { filter: drop-shadow(0 0 40px rgba(0, 212, 255, 0.8)); }
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            font-weight: 300;
+        }
+
+        /* Navigation */
+        .nav-bar {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .nav-button {
+            padding: 0.8rem 1.5rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-family: 'Orbitron', monospace;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-button:hover, .nav-button.active {
+            border-color: var(--neon-blue);
+            background: rgba(0, 212, 255, 0.1);
+            color: var(--text-primary);
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
+        }
+
+        /* Enhanced Control Panel */
+        .control-panel {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            margin: 2rem auto;
+            max-width: 1200px;
+            backdrop-filter: blur(10px);
+        }
+
+        .control-row {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .control-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .control-select {
+            padding: 0.8rem 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            min-width: 200px;
+        }
+
+        .control-select:focus {
+            outline: none;
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+
+        .control-button {
+            padding: 0.8rem 1.5rem;
+            background: linear-gradient(45deg, var(--neon-blue), var(--neon-purple));
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-family: 'Orbitron', monospace;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .control-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .control-button:hover::before {
+            left: 100%;
+        }
+
+        .control-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.4);
+        }
+
+        /* Enhanced Charts Container */
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .chart-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-green));
+        }
+
+        .chart-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 212, 255, 0.2);
+        }
+
+        .chart-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            color: var(--neon-blue);
+        }
+
+        .chart {
+            height: 400px;
+        }
+
+        .large-chart {
+            grid-column: span 2;
+        }
+
+        /* Enhanced Data Table */
+        .data-table-container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .data-table {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            overflow-x: auto;
+        }
+
+        .table-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            color: var(--neon-blue);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        th {
+            background: rgba(0, 212, 255, 0.1);
+            color: var(--neon-blue);
+            font-family: 'Orbitron', monospace;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        td {
+            color: var(--text-secondary);
+        }
+
+        .grade-cell {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            text-align: center;
+            display: inline-block;
+        }
+
+        .grade-aplus { background: rgba(0, 255, 136, 0.2); color: var(--neon-green); }
+        .grade-a { background: rgba(0, 212, 255, 0.2); color: var(--neon-blue); }
+        .grade-aminus { background: rgba(0, 168, 255, 0.2); color: #00a8ff; }
+        .grade-bplus { background: rgba(139, 92, 246, 0.2); color: var(--neon-purple); }
+        .grade-b { background: rgba(168, 85, 247, 0.2); color: #a855f7; }
+
+        .score-cell {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+        }
+
+        /* New Analysis Cards */
+        .analysis-section {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+        }
+
+        .analysis-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .analysis-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--neon-blue);
+        }
+
+        .analysis-content {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .analysis-metric {
+            display: flex;
+            justify-content: space-between;
+            margin: 1rem 0;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .metric-label {
+            color: var(--text-muted);
+        }
+
+        .metric-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .control-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .control-select {
+                min-width: auto;
+            }
+            
+            .charts-container {
+                grid-template-columns: 1fr;
+                padding: 1rem;
+            }
+            
+            .large-chart {
+                grid-column: span 1;
+            }
+            
+            .chart {
+                height: 300px;
+            }
+            
+            .nav-bar {
+                flex-wrap: wrap;
+                gap: 1rem;
+            }
+            
+            .analysis-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Loading Animation */
+        .loading {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .loaded {
+            opacity: 1;
+            transform: translateY(0);
+            transition: all 0.6s ease;
+        }
+
+        /* Pulse Animation */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Canvas -->
+    <div id="background-canvas"></div>
+
+    <!-- Header -->
+    <header class="header">
+        <h1 class="main-title pulse">详细分析</h1>
+        <p class="subtitle">Detailed Analysis & Data Visualization</p>
+        
+        <nav class="nav-bar">
+            <a href="index.html" class="nav-button">返回主页</a>
+            <a href="subject.html" class="nav-button">科目详情</a>
+        </nav>
+    </header>
+
+    <!-- Enhanced Control Panel -->
+    <section class="control-panel loading" id="control-panel">
+        <div class="control-row">
+            <div class="control-group">
+                <label class="control-label">选择科目</label>
+                <select class="control-select" id="subject-select">
+                    <option value="all">所有科目</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label class="control-label">分析类型</label>
+                <select class="control-select" id="analysis-type-select">
+                    <option value="comprehensive">综合分析</option>
+                    <option value="trend">趋势分析</option>
+                    <option value="comparison">对比分析</option>
+                    <option value="distribution">分布分析</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label class="control-label">时间范围</label>
+                <select class="control-select" id="time-range-select">
+                    <option value="all">全部数据</option>
+                    <option value="recent">最近评估</option>
+                    <option value="trend">趋势分析</option>
+                </select>
+            </div>
+            <button class="control-button" id="update-charts">更新分析</button>
+        </div>
+    </section>
+
+    <!-- Enhanced Charts Container -->
+    <section class="charts-container loading" id="charts-container">
+        <div class="chart-card large-chart">
+            <h3 class="chart-title">成绩趋势与预测</h3>
+            <div id="trend-chart" class="chart"></div>
+        </div>
+        
+        <div class="chart-card">
+            <h3 class="chart-title">等级分布</h3>
+            <div id="grade-distribution-chart" class="chart"></div>
+        </div>
+        
+        <div class="chart-card">
+            <h3 class="chart-title">科目能力雷达图</h3>
+            <div id="radar-chart" class="chart"></div>
+        </div>
+        
+        <div class="chart-card large-chart">
+            <h3 class="chart-title">各次考试成绩对比</h3>
+            <div id="exam-comparison-chart" class="chart"></div>
+        </div>
+        
+        <div class="chart-card">
+            <h3 class="chart-title">成绩稳定性分析</h3>
+            <div id="stability-chart" class="chart"></div>
+        </div>
+        
+        <div class="chart-card">
+            <h3 class="chart-title">进步幅度分析</h3>
+            <div id="improvement-chart" class="chart"></div>
+        </div>
+    </section>
+
+    <!-- Enhanced Data Table -->
+    <section class="data-table-container loading" id="data-table-container">
+        <div class="data-table">
+            <h3 class="table-title">详细成绩数据表</h3>
+            <table id="grades-table">
+                <thead>
+                    <tr>
+                        <th>科目</th>
+                        <th>评估项目</th>
+                        <th>分数</th>
+                        <th>满分</th>
+                        <th>等级</th>
+                        <th>百分比</th>
+                        <th>与平均分差</th>
+                    </tr>
+                </thead>
+                <tbody id="grades-table-body">
+                    <!-- Table rows will be dynamically generated -->
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- New Analysis Section -->
+    <section class="analysis-section loading" id="analysis-section">
+        <div class="analysis-grid">
+            <div class="analysis-card">
+                <h3 class="analysis-title">整体表现分析</h3>
+                <div class="analysis-content">
+                    <div class="analysis-metric">
+                        <span class="metric-label">加权平均分</span>
+                        <span class="metric-value">85.4分</span>
+                    </div>
+                    <div class="analysis-metric">
+                        <span class="metric-label">标准差</span>
+                        <span class="metric-value">18.2</span>
+                    </div>
+                    <div class="analysis-metric">
+                        <span class="metric-label">变异系数</span>
+                        <span class="metric-value">21.3%</span>
+                    </div>
+                    <p><strong style="color: #ff6b35;">Aoody，你的整体表现需要改进！</strong> 平均分85.4分低于90分目标，特别是物理科目需要重点关注。建议立即调整学习策略，加强薄弱科目。</p>
+                </div>
+            </div>
+            
+            <div class="analysis-card">
+                <h3 class="analysis-title">科目详细分析</h3>
+                <div class="analysis-content">
+                    <div class="analysis-metric">
+                        <span class="metric-label">最强科目</span>
+                        <span class="metric-value" style="color: #00ff88;">生物 (95分) ✓</span>
+                    </div>
+                    <div class="analysis-metric">
+                        <span class="metric-label">最弱科目</span>
+                        <span class="metric-value" style="color: #ff4757;">物理 (68分) ✗</span>
+                    </div>
+                    <div class="analysis-metric">
+                        <span class="metric-label">危险科目</span>
+                        <span class="metric-value" style="color: #ff6b35;">数学 (84分) ⚠️</span>
+                    </div>
+                    <p><strong style="color: #ff4757;">Aoody，你的物理成绩严重不足！</strong> 68分远低于90分目标，需要立即采取行动。数学也处于危险边缘，必须加强练习。</p>
+                </div>
+            </div>
+            
+            <div class="analysis-card">
+                <h3 class="analysis-title">紧急学习建议</h3>
+                <div class="analysis-content">
+                    <p><strong style="color: #ff4757;">物理科目：</strong>Aoody，你的物理成绩只有68分，这是你最薄弱的环节！你需要立即加强基础知识学习，多做习题，寻求老师帮助。</p>
+                    <p><strong style="color: #ff6b35;">数学科目：</strong>Aoody，你的数学84分也低于90分目标，需要加强练习，特别是基础运算和应用题。</p>
+                    <p><strong style="color: #00d4ff;">其他科目：</strong>继续保持良好状态，但不要忽视任何低于90分的科目。</p>
+                </div>
+            </div>
+            
+            <div class="analysis-card">
+                <h3 class="analysis-title">目标与行动计划</h3>
+                <div class="analysis-content">
+                    <div class="analysis-metric">
+                        <span class="metric-label">下次考试目标</span>
+                        <span class="metric-value" style="color: #f59e0b;">88-92分</span>
+                    </div>
+                    <div class="analysis-metric">
+                        <span class="metric-label">期末目标</span>
+                        <span class="metric-value" style="color: #00ff88;">90分以上</span>
+                    </div>
+                    <p><strong style="color: #ff4757;">Aoody，你必须立即行动！</strong> 基于当前成绩，你需要制定详细的学习计划，每天至少2小时专注于物理和数学。期末必须达到90分以上，否则会影响整体学业表现。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Scripts -->
+    <script src="grades_data.js"></script>
+    <script>
+        // 增强版详细分析页面逻辑
+        class DetailedAnalysis {
+            constructor() {
+                this.charts = {};
+                this.currentSubject = 'all';
+                this.currentAnalysisType = 'comprehensive';
+                this.currentTimeRange = 'all';
+                
+                this.init();
+            }
+
+            init() {
+                this.setupBackground();
+                this.setupControls();
+                this.loadSubjectOptions();
+                this.createAllCharts();
+                this.generateDataTable();
+                this.setupAnimations();
+            }
+
+            setupBackground() {
+                const sketch = (p) => {
+                    let particles = [];
+
+                    p.setup = () => {
+                        const canvas = p.createCanvas(p.windowWidth, p.windowHeight);
+                        canvas.parent('background-canvas');
+                        
+                        for (let i = 0; i < 80; i++) {
+                            particles.push({
+                                x: p.random(p.width),
+                                y: p.random(p.height),
+                                vx: p.random(-0.3, 0.3),
+                                vy: p.random(-0.3, 0.3),
+                                size: p.random(2, 6),
+                                opacity: p.random(0.2, 0.6)
+                            });
+                        }
+                    };
+
+                    p.draw = () => {
+                        p.clear();
+                        
+                        particles.forEach(particle => {
+                            p.fill(0, 255, 136, particle.opacity * 255);
+                            p.noStroke();
+                            p.circle(particle.x, particle.y, particle.size);
+                            
+                            particle.x += particle.vx;
+                            particle.y += particle.vy;
+                            
+                            if (particle.x < 0 || particle.x > p.width) particle.vx *= -1;
+                            if (particle.y < 0 || particle.y > p.height) particle.vy *= -1;
+                        });
+                    };
+
+                    p.windowResized = () => {
+                        p.resizeCanvas(p.windowWidth, p.windowHeight);
+                    };
+                };
+
+                new p5(sketch);
+            }
+
+            setupControls() {
+                document.getElementById('update-charts').addEventListener('click', () => {
+                    this.currentSubject = document.getElementById('subject-select').value;
+                    this.currentAnalysisType = document.getElementById('analysis-type-select').value;
+                    this.currentTimeRange = document.getElementById('time-range-select').value;
+                    
+                    this.updateCharts();
+                });
+            }
+
+            loadSubjectOptions() {
+                const select = document.getElementById('subject-select');
+                gradesData.subjects.forEach(subject => {
+                    const option = document.createElement('option');
+                    option.value = subject.id;
+                    option.textContent = subject.name;
+                    select.appendChild(option);
+                });
+            }
+
+            createAllCharts() {
+                this.createTrendChart();
+                this.createGradeDistributionChart();
+                this.createRadarChart();
+                this.createExamComparisonChart();
+                this.createStabilityChart();
+                this.createImprovementChart();
+            }
+
+            createTrendChart() {
+                const chartDom = document.getElementById('trend-chart');
+                const chart = echarts.init(chartDom);
+                this.charts.trend = chart;
+
+                // 模拟趋势数据和预测
+                const dates = ['第1次', '第2次', '第3次', '第4次', '第5次', '第6次', '预测1', '预测2'];
+                const actualData = [82, 84, 86, 85, 87, 89, null, null];
+                const predictedData = [null, null, null, null, null, 89, 90, 91];
+
+                const option = {
+                    backgroundColor: 'transparent',
+                    tooltip: {
+                        trigger: 'axis',
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        borderColor: '#00d4ff',
+                        textStyle: { color: '#fff' }
+                    },
+                    legend: {
+                        data: ['实际成绩', '预测成绩', '平均分线'],
+                        textStyle: { color: '#fff' }
+                    },
+                    grid: {
+                        left: '3%',
+                        right: '4%',
+                        bottom: '3%',
+                        containLabel: true
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: dates,
+                        axisLine: { lineStyle: { color: '#666' } },
+                        axisLabel: { color: '#fff' }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        min: 75,
+                        max: 95,
+                        axisLine: { lineStyle: { color: '#666' } },
+                        axisLabel: { color: '#fff' },
+                        splitLine: { lineStyle: { color: '#333' } }
+                    },
+                    series: [
+                        {
+                            name: '实际成绩',
+                            type: 'line',
+                            data: actualData,
+                            lineStyle: { color: '#00d4ff', width: 3 },
+                            itemStyle: { color: '#00d4ff' },
+                            areaStyle: {
+                                color: {
+                                    type: 'linear',
+                                    x: 0, y: 0, x2: 0, y2: 1,
+                                    colorStops: [
+                                        { offset: 0, color: 'rgba(0, 212, 255, 0.3)' },
+                                        { offset: 1, color: 'rgba(0, 212, 255, 0.05)' }
+                                    ]
+                                }
+                            },
+                            smooth: true
+                        },
+                        {
+                            name: '预测成绩',
+                            type: 'line',
+                            data: predictedData,
+                            lineStyle: { color: '#ff6b35', width: 3, type: 'dashed' },
+                            itemStyle: { color: '#ff6b35' },
+                            smooth: true
+                        },
+                        {
+                            name: '平均分线',
+                            type: 'line',
+                            data: new Array(dates.length).fill(86),
+                            lineStyle: { color: '#8b5cf6', type: 'dashed', width: 2 },
+                            symbol: 'none'
+                        }
+                    ]
+                };
+
+                chart.setOption(option);
+            }
+
+            createGradeDistributionChart() {
+                const chartDom = document.getElementById('grade-distribution-chart');
+                const chart = echarts.init(chartDom);
+                this.charts.gradeDistribution = chart;
+
+                const gradeCounts = {};
+                gradesData.subjects.forEach(subject => {
+                    const gradeInfo = getGradeLevel(subject.totalScore);
+                    const grade = gradeInfo.grade;
+                    gradeCounts[grade] = (gradeCounts[grade] || 0) + 1;
+                });
+
+                const data = Object.entries(gradeCounts).map(([grade, count]) => ({
+                    name: grade,
+                    value: count,
+                    itemStyle: {
+                        color: gradesData.gradeLevels[grade]?.color || '#666'
+                    }
+                }));
+
+                const option = {
+                    backgroundColor: 'transparent',
+                    tooltip: {
+                        trigger: 'item',
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        borderColor: '#00d4ff',
+                        textStyle: { color: '#fff' }
+                    },
+                    series: [{
+                        type: 'pie',
+                        radius: ['40%', '70%'],
+                        center: ['50%', '50%'],
+                        data: data,
+                        emphasis: {
+                            itemStyle: {
+                                shadowBlur: 10,
+                                shadowColor: 'rgba(0, 212, 255, 0.5)'
+                            }
+                        },
+                        label: { color: '#fff', fontSize: 12 }
+                    }]
+                };
+
+                chart.setOption(option);
+            }
+
+            createRadarChart() {
+                const chartDom = document.getElementById('radar-chart');
+                const chart = echarts.init(chartDom);
+                this.charts.radar = chart;
+
+                const subjects = gradesData.subjects.map(s => s.name);
+                const scores = gradesData.subjects.map(s => s.totalScore);
+
+                const option = {
+                    backgroundColor: 'transparent',
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        borderColor: '#00d4ff',
+                        textStyle: { color: '#fff' }
+                    },
+                    radar: {
+                        indicator: subjects.map(name => ({ name, max: 100 })),
+                        center: ['50%', '50%'],
+                        radius: '70%',
+                        axisName: {
+                            color: '#fff',
+                            fontSize: 12
+                        },
+                        splitLine: {
+                            lineStyle: { color: '#333' }
+                        },
+                        splitArea: {
+                            areaStyle: {
+                                color: ['rgba(0, 212, 255, 0.05)', 'rgba(0, 212, 255, 0.1)']
+                            }
+                        }
+                    },
+                    series: [{
+                        type: 'radar',
+                        data: [{
+                            value: scores,
+                            name: '成绩',
+                            areaStyle: {
+                                color: 'rgba(0, 212, 255, 0.2)'
+                            },
+                            lineStyle: {
+                                color: '#00d4ff',
+                                width: 2
+                            },
+                            itemStyle: {
+                                color: '#00d4ff'
+                            }
+                        }]
+                    }]
+                };
+
+                chart.setOption(option);
+            }
+
+            createExamComparisonChart() {
+                const chartDom = document.getElementById('exam-comparison-chart');
+                const chart = echarts.init(chartDom);
+                this.charts.examComparison = chart;
+
+                const allExams = [];
+                gradesData.subjects.forEach(subject => {
+                    subject.exams.forEach(exam => {
+                        allExams.push({
+                            subject: subject.name,
+                            examName: exam.name,
+                            score: exam.score,
+                            fullScore: exam.fullScore
+                        });
+                    });
+                });
+
+                const option = {
+                    backgroundColor: 'transparent',
+                    tooltip: {
+                        trigger: 'axis',
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        borderColor: '#00d4ff',
+                        textStyle: { color: '#fff' }
+                    },
+                    grid: {
+                        left: '3%',
+                        right: '4%',
+                        bottom: '15%',
+                        containLabel: true
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: allExams.map(e => `${e.subject}-${e.examName}`),
+                        axisLine: { lineStyle: { color: '#666' } },
+                        axisLabel: { 
+                            color: '#fff', 
+                            rotate: 45,
+                            fontSize: 10
+                        }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        min: 0,
+                        max: 100,
+                        axisLine: { lineStyle: { color: '#666' } },
+                        axisLabel: { color: '#fff' },
+                        splitLine: { lineStyle: { color: '#333' } }
+                    },
+                    series: [{
+                        type: 'bar',
+                        data: allExams.map(e => ({
+                            value: e.score,
+                            itemStyle: {
+                                color: this.getScoreColor(e.score)
+                            }
+                        })),
+                        barWidth: '60%'
+                    }]
+                };
+
+                chart.setOption(option);
+            }
+
+            createStabilityChart() {
+                const chartDom = document.getElementById('stability-chart');
+                const chart = echarts.init(chartDom);
+                this.charts.stability = chart;
+
+                // 计算每个科目的标准差作为稳定性指标（排除PASS科目）
+                const stabilityData = gradesData.subjects
+                    .filter(subject => !subject.isPassFail)
+                    .map(subject => {
+                        const scores = subject.exams
+                            .filter(e => e.score !== null && e.score !== undefined)
+                            .map(e => e.score);
+                        
+                        if (scores.length === 0) {
+                            return {
+                                name: subject.name,
+                                value: 0
+                            };
+                        }
+                        
+                        const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+                        const variance = scores.reduce((sum, score) => sum + Math.pow(score - avg, 2), 0) / scores.length;
+                        const stdDev = Math.sqrt(variance);
+                        const stabilityScore = Math.max(0, 100 - stdDev * 3); // 稳定性分数
+                        return {
+                            name: subject.name,
+                            value: Math.round(stabilityScore * 10) / 10
+                        };
+                    });
+
+                const option = {
+                    backgroundColor: 'transparent',
+                    tooltip: {
+                        trigger: 'axis',
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        borderColor: '#00d4ff',
+                        textStyle: { color: '#fff' },
+                        formatter: function(params) {
+                            const data = params[0];
+                            return `${data.name}<br/>稳定性: ${data.value}分`;
+                        }
+                    },
+                    grid: {
+                        left: '3%',
+                        right: '4%',
+                        bottom: '3%',
+                        containLabel: true
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: stabilityData.map(d => d.name),
+                        axisLine: { lineStyle: { color: '#666' } },
+                        axisLabel: { color: '#fff', rotate: 45 }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        min: 0,
+                        max: 100,
+                        axisLine: { lineStyle: { color: '#666' } },
+                        axisLabel: { color: '#fff' },
+                        splitLine: { lineStyle: { color: '#333' } }
+                    },
+                    series: [{
+                        type: 'bar',
+                        data: stabilityData.map(d => ({
+                            value: d.value,
+                            itemStyle: {
+                                color: d.value >= 80 ? '#00ff88' : d.value >= 60 ? '#00d4ff' : '#ff6b35'
+                            }
+                        })),
+                        barWidth: '60%'
+                    }]
+                };
+
+                chart.setOption(option);
+            }
+
+            createImprovementChart() {
+                const chartDom = document.getElementById('improvement-chart');
+                const chart = echarts.init(chartDom);
+                this.charts.improvement = chart;
+
+                // 计算每个科目的进步幅度
+                const improvementData = gradesData.subjects.map(subject => {
+                    if (subject.exams.length < 2) {
+                        return { name: subject.name, value: 0 };
+                    }
+                    const firstScore = subject.exams[0].score;
+                    const lastScore = subject.exams[subject.exams.length - 1].score;
+                    const improvement = lastScore - firstScore;
+                    return {
+                        name: subject.name,
+                        value: Math.round(improvement * 10) / 10
+                    };
+                });
+
+                const option = {
+                    backgroundColor: 'transparent',
+                    tooltip: {
+                        trigger: 'axis',
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        borderColor: '#00d4ff',
+                        textStyle: { color: '#fff' },
+                        formatter: function(params) {
+                            const data = params[0];
+                            const trend = data.value > 0 ? '进步' : data.value < 0 ? '退步' : '稳定';
+                            return `${data.name}<br/>${trend}: ${data.value > 0 ? '+' : ''}${data.value}分`;
+                        }
+                    },
+                    grid: {
+                        left: '3%',
+                        right: '4%',
+                        bottom: '3%',
+                        containLabel: true
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: improvementData.map(d => d.name),
+                        axisLine: { lineStyle: { color: '#666' } },
+                        axisLabel: { color: '#fff', rotate: 45 }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        axisLine: { lineStyle: { color: '#666' } },
+                        axisLabel: { color: '#fff' },
+                        splitLine: { lineStyle: { color: '#333' } }
+                    },
+                    series: [{
+                        type: 'bar',
+                        data: improvementData.map(d => ({
+                            value: d.value,
+                            itemStyle: {
+                                color: d.value > 0 ? '#00ff88' : d.value < 0 ? '#ff4757' : '#8b5cf6'
+                            }
+                        })),
+                        barWidth: '60%'
+                    }]
+                };
+
+                chart.setOption(option);
+            }
+
+            generateDataTable() {
+                const tbody = document.getElementById('grades-table-body');
+                
+                gradesData.subjects.forEach(subject => {
+                    subject.exams.forEach(exam => {
+                        const row = document.createElement('tr');
+                        const gradeInfo = getGradeLevel(exam.score);
+                        const percentage = Math.round((exam.score / exam.fullScore) * 100);
+                        const diffFromAverage = exam.score - gradesData.averageScore;
+                        
+                        row.innerHTML = `
+                            <td>${subject.name}</td>
+                            <td>${exam.name}</td>
+                            <td class="score-cell">${exam.score}</td>
+                            <td>${exam.fullScore}</td>
+                            <td><span class="grade-cell grade-${gradeInfo.grade.toLowerCase().replace('+', 'plus').replace('-', 'minus')}">${gradeInfo.grade}</span></td>
+                            <td class="score-cell">${percentage}%</td>
+                            <td class="score-cell" style="color: ${diffFromAverage >= 0 ? '#00ff88' : '#ff4757'}">${diffFromAverage > 0 ? '+' : ''}${diffFromAverage}</td>
+                        `;
+                        
+                        tbody.appendChild(row);
+                    });
+                });
+            }
+
+            getScoreColor(score) {
+                if (score >= 97) return '#00ff88';
+                if (score >= 93) return '#00d4ff';
+                if (score >= 90) return '#00a8ff';
+                if (score >= 87) return '#8b5cf6';
+                if (score >= 84) return '#a855f7';
+                if (score >= 81) return '#c084fc';
+                if (score >= 78) return '#f59e0b';
+                if (score >= 75) return '#f97316';
+                if (score >= 72) return '#fb923c';
+                return '#ef4444';
+            }
+
+            updateCharts() {
+                // 这里可以根据选择的条件更新图表
+                console.log('更新图表:', this.currentSubject, this.currentAnalysisType, this.currentTimeRange);
+                
+                // 显示更新动画
+                anime({
+                    targets: '.chart-card',
+                    scale: [1, 0.95, 1],
+                    duration: 300,
+                    easing: 'easeOutQuart'
+                });
+            }
+
+            setupAnimations() {
+                // 页面加载动画
+                anime({
+                    targets: '.loading',
+                    opacity: [0, 1],
+                    translateY: [30, 0],
+                    delay: anime.stagger(150),
+                    duration: 800,
+                    easing: 'easeOutQuart',
+                    complete: () => {
+                        document.qu
