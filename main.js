@@ -11,6 +11,7 @@ class AcademicMonitoringSystem {
     init() {
         this.setupBackground();
         this.setupTimeDisplay();
+        this.ensureGpaCard();
         this.setupAnimations();
         this.generateSubjectCards();
         this.createAllCharts();
@@ -164,7 +165,10 @@ class AcademicMonitoringSystem {
 
     // 统计数字动画
     animateStats() {
+        this.updateGpaDisplay();
+        const gpaScore = this.calculateGpaFromExams();
         const stats = [
+            { element: '#gpa-score', target: gpaScore, decimals: 2 },
             { element: '#average-score', target: 89 },
             { element: '#highest-score', target: 95 },
             { element: '#lowest-score', target: 84 },
@@ -186,12 +190,69 @@ class AcademicMonitoringSystem {
                             const value = anim.animatables[0].target.value;
                             const prefix = stat.prefix || '';
                             const suffix = stat.suffix || '';
-                            element.textContent = prefix + Math.round(value * 10) / 10 + suffix;
+                            const decimals = stat.decimals ?? 1;
+                            const factor = 10 ** decimals;
+                            const displayValue = Math.round(value * factor) / factor;
+                            element.textContent = prefix + displayValue + suffix;
                         }
                     });
                 }, index * 200);
             }
         });
+    }
+
+    ensureGpaCard() {
+        const statsOverview = document.getElementById('stats-overview');
+        if (!statsOverview || document.getElementById('gpa-score')) return;
+
+        const averageCard = document.getElementById('average-score')?.closest('.stat-card');
+        const gpaCard = document.createElement('div');
+        gpaCard.className = 'stat-card glow-blue';
+        gpaCard.innerHTML = `
+            <div class="stat-value gpa-score" id="gpa-score">--</div>
+            <div class="stat-label">GPA（4.0制）</div>
+        `;
+
+        if (averageCard) {
+            statsOverview.insertBefore(gpaCard, averageCard);
+        } else {
+            statsOverview.prepend(gpaCard);
+        }
+    }
+
+    updateGpaDisplay() {
+        const gpaElement = document.getElementById('gpa-score');
+        if (!gpaElement) return;
+        const gpa = this.calculateGpaFromExams();
+        gpaElement.textContent = gpa.toFixed(2);
+    }
+
+    calculateGpaFromExams() {
+        const examScores = [];
+        gradesData.subjects.forEach(subject => {
+            subject.exams.forEach(exam => {
+                if (typeof exam.score === 'number' && typeof exam.fullScore === 'number' && exam.fullScore > 0) {
+                    const percent = (exam.score / exam.fullScore) * 100;
+                    examScores.push(percent);
+                }
+            });
+        });
+
+        if (examScores.length === 0) return 0;
+
+        const totalGpa = examScores
+            .map(score => this.convertPercentToGpa(score))
+            .reduce((sum, gpa) => sum + gpa, 0);
+
+        return totalGpa / examScores.length;
+    }
+
+    convertPercentToGpa(percent) {
+        if (percent >= 90) return 4.0;
+        if (percent >= 80) return 3.0;
+        if (percent >= 70) return 2.0;
+        if (percent >= 60) return 1.0;
+        return 0.0;
     }
 
     // 生成科目卡片
