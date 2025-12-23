@@ -552,7 +552,7 @@ class AcademicMonitoringSystem {
             if (subject.isPassFail) {
                 return {
                     name: subject.name,
-                    value: 0,
+                    value: 2,
                     avg: 89,
                     isPass: true
                 };
@@ -629,7 +629,8 @@ class AcademicMonitoringSystem {
                                d.value < 20 ? '#8b5cf6' : '#ff6b35'
                     }
                 })),
-                barWidth: '60%'
+                barWidth: '60%',
+                barMinHeight: 6
             }]
         };
 

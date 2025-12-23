@@ -1140,4 +1140,18 @@
                     duration: 800,
                     easing: 'easeOutQuart',
                     complete: () => {
-                        document.qu
+                        document.querySelectorAll('.loading').forEach(el => {
+                            el.classList.remove('loading');
+                            el.classList.add('loaded');
+                        });
+                    }
+                });
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            new DetailedAnalysis();
+        });
+    </script>
+</body>
+</html>
