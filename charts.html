@@ -312,6 +312,7 @@
         .grade-aminus { background: rgba(0, 168, 255, 0.2); color: #00a8ff; }
         .grade-bplus { background: rgba(139, 92, 246, 0.2); color: var(--neon-purple); }
         .grade-b { background: rgba(168, 85, 247, 0.2); color: #a855f7; }
+        .grade-pass { background: rgba(0, 212, 255, 0.15); color: var(--neon-blue); }
 
         .score-cell {
             font-family: 'JetBrains Mono', monospace;
@@ -536,17 +537,17 @@
                 <div class="analysis-content">
                     <div class="analysis-metric">
                         <span class="metric-label">加权平均分</span>
-                        <span class="metric-value">85.4分</span>
+                        <span class="metric-value" id="analysis-average">--</span>
                     </div>
                     <div class="analysis-metric">
                         <span class="metric-label">标准差</span>
-                        <span class="metric-value">18.2</span>
+                        <span class="metric-value" id="analysis-stddev">--</span>
                     </div>
                     <div class="analysis-metric">
                         <span class="metric-label">变异系数</span>
-                        <span class="metric-value">21.3%</span>
+                        <span class="metric-value" id="analysis-cv">--</span>
                     </div>
-                    <p><strong style="color: #ff6b35;">Aoody，你的整体表现需要改进！</strong> 平均分85.4分低于90分目标，特别是物理科目需要重点关注。建议立即调整学习策略，加强薄弱科目。</p>
+                    <p id="analysis-summary-text"></p>
                 </div>
             </div>
             
@@ -555,27 +556,23 @@
                 <div class="analysis-content">
                     <div class="analysis-metric">
                         <span class="metric-label">最强科目</span>
-                        <span class="metric-value" style="color: #00ff88;">生物 (95分) ✓</span>
+                        <span class="metric-value" id="analysis-strongest">--</span>
                     </div>
                     <div class="analysis-metric">
                         <span class="metric-label">最弱科目</span>
-                        <span class="metric-value" style="color: #ff4757;">物理 (68分) ✗</span>
+                        <span class="metric-value" id="analysis-weakest">--</span>
                     </div>
                     <div class="analysis-metric">
                         <span class="metric-label">危险科目</span>
-                        <span class="metric-value" style="color: #ff6b35;">数学 (84分) ⚠️</span>
+                        <span class="metric-value" id="analysis-risky">--</span>
                     </div>
-                    <p><strong style="color: #ff4757;">Aoody，你的物理成绩严重不足！</strong> 68分远低于90分目标，需要立即采取行动。数学也处于危险边缘，必须加强练习。</p>
+                    <p id="analysis-detail-text"></p>
                 </div>
             </div>
             
             <div class="analysis-card">
                 <h3 class="analysis-title">紧急学习建议</h3>
-                <div class="analysis-content">
-                    <p><strong style="color: #ff4757;">物理科目：</strong>Aoody，你的物理成绩只有68分，这是你最薄弱的环节！你需要立即加强基础知识学习，多做习题，寻求老师帮助。</p>
-                    <p><strong style="color: #ff6b35;">数学科目：</strong>Aoody，你的数学84分也低于90分目标，需要加强练习，特别是基础运算和应用题。</p>
-                    <p><strong style="color: #00d4ff;">其他科目：</strong>继续保持良好状态，但不要忽视任何低于90分的科目。</p>
-                </div>
+                <div class="analysis-content" id="analysis-advice"></div>
             </div>
             
             <div class="analysis-card">
@@ -583,13 +580,13 @@
                 <div class="analysis-content">
                     <div class="analysis-metric">
                         <span class="metric-label">下次考试目标</span>
-                        <span class="metric-value" style="color: #f59e0b;">88-92分</span>
+                        <span class="metric-value" id="analysis-next-target">--</span>
                     </div>
                     <div class="analysis-metric">
                         <span class="metric-label">期末目标</span>
-                        <span class="metric-value" style="color: #00ff88;">90分以上</span>
+                        <span class="metric-value" id="analysis-final-target">--</span>
                     </div>
-                    <p><strong style="color: #ff4757;">Aoody，你必须立即行动！</strong> 基于当前成绩，你需要制定详细的学习计划，每天至少2小时专注于物理和数学。期末必须达到90分以上，否则会影响整体学业表现。</p>
+                    <p id="analysis-plan-text"></p>
                 </div>
             </div>
         </div>
@@ -615,6 +612,7 @@
                 this.loadSubjectOptions();
                 this.createAllCharts();
                 this.generateDataTable();
+                this.updateAnalysisSection();
                 this.setupAnimations();
             }
 
@@ -700,10 +698,19 @@
                 const chart = echarts.init(chartDom);
                 this.charts.trend = chart;
 
-                // 模拟趋势数据和预测
-                const dates = ['第1次', '第2次', '第3次', '第4次', '第5次', '第6次', '预测1', '预测2'];
-                const actualData = [82, 84, 86, 85, 87, 89, null, null];
-                const predictedData = [null, null, null, null, null, 89, 90, 91];
+                this.updateTrendChart();
+            }
+
+            updateTrendChart() {
+                if (!this.charts.trend) {
+                    return;
+                }
+
+                const { labels, actualData, predictedData, averageValue } = this.buildTrendData();
+
+                const valueSamples = [...actualData, ...predictedData].filter(value => typeof value === 'number');
+                const minValue = valueSamples.length ? Math.max(0, Math.floor(Math.min(...valueSamples) - 10)) : 0;
+                const maxValue = valueSamples.length ? Math.min(100, Math.ceil(Math.max(...valueSamples) + 10)) : 100;
 
                 const option = {
                     backgroundColor: 'transparent',
@@ -725,14 +732,14 @@
                     },
                     xAxis: {
                         type: 'category',
-                        data: dates,
+                        data: labels,
                         axisLine: { lineStyle: { color: '#666' } },
                         axisLabel: { color: '#fff' }
                     },
                     yAxis: {
                         type: 'value',
-                        min: 75,
-                        max: 95,
+                        min: minValue,
+                        max: maxValue,
                         axisLine: { lineStyle: { color: '#666' } },
                         axisLabel: { color: '#fff' },
                         splitLine: { lineStyle: { color: '#333' } }
@@ -767,14 +774,73 @@
                         {
                             name: '平均分线',
                             type: 'line',
-                            data: new Array(dates.length).fill(86),
+                            data: new Array(labels.length).fill(averageValue),
                             lineStyle: { color: '#8b5cf6', type: 'dashed', width: 2 },
                             symbol: 'none'
                         }
                     ]
                 };
 
-                chart.setOption(option);
+                this.charts.trend.setOption(option);
+            }
+
+            buildTrendData() {
+                if (this.currentSubject === 'all') {
+                    const subjects = gradesData.subjects.filter(subject => typeof subject.totalScore === 'number');
+                    const labels = subjects.map(subject => subject.name);
+                    const actualData = subjects.map(subject => subject.totalScore);
+                    const averageValue = actualData.length
+                        ? actualData.reduce((sum, score) => sum + score, 0) / actualData.length
+                        : gradesData.averageScore;
+
+                    return {
+                        labels,
+                        actualData,
+                        predictedData: new Array(labels.length).fill(null),
+                        averageValue
+                    };
+                }
+
+                const subject = gradesData.subjects.find(item => item.id === this.currentSubject);
+                if (!subject) {
+                    return {
+                        labels: [],
+                        actualData: [],
+                        predictedData: [],
+                        averageValue: gradesData.averageScore
+                    };
+                }
+
+                let exams = subject.exams.filter(exam => typeof exam.score === 'number');
+                if (this.currentTimeRange === 'recent') {
+                    exams = exams.slice(-3);
+                }
+
+                const labels = exams.map(exam => exam.name);
+                const normalizedScores = exams.map(exam => Math.round((exam.score / exam.fullScore) * 100));
+                const actualData = [...normalizedScores];
+                const averageValue = normalizedScores.length
+                    ? normalizedScores.reduce((sum, score) => sum + score, 0) / normalizedScores.length
+                    : gradesData.averageScore;
+
+                let predictedData = new Array(actualData.length).fill(null);
+                if (normalizedScores.length >= 2) {
+                    const last = normalizedScores[normalizedScores.length - 1];
+                    const prev = normalizedScores[normalizedScores.length - 2];
+                    const delta = last - prev;
+                    const next1 = Math.min(100, Math.max(0, Math.round(last + delta)));
+                    const next2 = Math.min(100, Math.max(0, Math.round(next1 + delta)));
+                    labels.push('预测1', '预测2');
+                    actualData.push(null, null);
+                    predictedData = predictedData.concat([next1, next2]);
+                }
+
+                return {
+                    labels,
+                    actualData,
+                    predictedData,
+                    averageValue
+                };
             }
 
             createGradeDistributionChart() {
@@ -1089,20 +1155,26 @@
                 gradesData.subjects.forEach(subject => {
                     subject.exams.forEach(exam => {
                         const row = document.createElement('tr');
-                        const gradeInfo = getGradeLevel(exam.score);
-                        const percentage = Math.round((exam.score / exam.fullScore) * 100);
-                        const diffFromAverage = exam.score - gradesData.averageScore;
-                        
+                        const isScoreMissing = exam.score === null || exam.score === undefined;
+                        const gradeInfo = isScoreMissing ? null : getGradeLevel(exam.score);
+                        const percentage = isScoreMissing ? '--' : `${Math.round((exam.score / exam.fullScore) * 100)}%`;
+                        const diffFromAverage = isScoreMissing ? '--' : exam.score - gradesData.averageScore;
+                        const scoreDisplay = isScoreMissing ? (exam.displayScore || 'N/A') : exam.score;
+                        const gradeDisplay = isScoreMissing ? (exam.displayScore || 'PASS') : gradeInfo.grade;
+                        const gradeClass = isScoreMissing
+                            ? 'grade-pass'
+                            : `grade-${gradeInfo.grade.toLowerCase().replace('+', 'plus').replace('-', 'minus')}`;
+
                         row.innerHTML = `
                             <td>${subject.name}</td>
                             <td>${exam.name}</td>
-                            <td class="score-cell">${exam.score}</td>
+                            <td class="score-cell">${scoreDisplay}</td>
                             <td>${exam.fullScore}</td>
-                            <td><span class="grade-cell grade-${gradeInfo.grade.toLowerCase().replace('+', 'plus').replace('-', 'minus')}">${gradeInfo.grade}</span></td>
-                            <td class="score-cell">${percentage}%</td>
-                            <td class="score-cell" style="color: ${diffFromAverage >= 0 ? '#00ff88' : '#ff4757'}">${diffFromAverage > 0 ? '+' : ''}${diffFromAverage}</td>
+                            <td><span class="grade-cell ${gradeClass}">${gradeDisplay}</span></td>
+                            <td class="score-cell">${percentage}</td>
+                            <td class="score-cell" style="color: ${diffFromAverage === '--' ? '#c8d6e5' : diffFromAverage >= 0 ? '#00ff88' : '#ff4757'}">${diffFromAverage === '--' ? '--' : `${diffFromAverage > 0 ? '+' : ''}${diffFromAverage}`}</td>
                         `;
-                        
+
                         tbody.appendChild(row);
                     });
                 });
@@ -1132,6 +1204,106 @@
                     duration: 300,
                     easing: 'easeOutQuart'
                 });
+
+                this.updateTrendChart();
+                this.updateAnalysisSection();
+            }
+
+            updateAnalysisSection() {
+                const subject = this.currentSubject === 'all'
+                    ? null
+                    : gradesData.subjects.find(item => item.id === this.currentSubject);
+                const focusName = subject ? subject.name : '整体';
+                const subjectScores = subject
+                    ? subject.exams.map(exam => exam.score).filter(score => typeof score === 'number')
+                    : gradesData.subjects
+                        .map(item => item.totalScore)
+                        .filter(score => typeof score === 'number');
+
+                if (!subjectScores.length) {
+                    return;
+                }
+
+                const average = subjectScores.reduce((sum, score) => sum + score, 0) / subjectScores.length;
+                const variance = subjectScores.reduce((sum, score) => sum + Math.pow(score - average, 2), 0) / subjectScores.length;
+                const stdDev = Math.sqrt(variance);
+                const cv = (stdDev / average) * 100;
+
+                document.getElementById('analysis-average').textContent = `${average.toFixed(1)}分`;
+                document.getElementById('analysis-stddev').textContent = stdDev.toFixed(1);
+                document.getElementById('analysis-cv').textContent = `${cv.toFixed(1)}%`;
+
+                const summaryText = document.getElementById('analysis-summary-text');
+                const performanceHint = average >= 90
+                    ? `<strong style="color: #00ff88;">${focusName}表现优秀！</strong> 平均分达到${average.toFixed(1)}分，继续保持高质量复习节奏。`
+                    : average >= 85
+                        ? `<strong style="color: #ff6b35;">${focusName}仍有提升空间。</strong> 平均分${average.toFixed(1)}分接近目标线，建议巩固薄弱点。`
+                        : `<strong style="color: #ff4757;">${focusName}需要重点关注！</strong> 平均分${average.toFixed(1)}分偏低，应尽快调整学习策略。`;
+                summaryText.innerHTML = performanceHint;
+
+                const strongestEl = document.getElementById('analysis-strongest');
+                const weakestEl = document.getElementById('analysis-weakest');
+                const riskyEl = document.getElementById('analysis-risky');
+
+                if (subject) {
+                    const sortedScores = [...subjectScores].sort((a, b) => b - a);
+                    const highest = sortedScores[0];
+                    const lowest = sortedScores[sortedScores.length - 1];
+                    strongestEl.textContent = `${subject.name} (${highest}分) ✓`;
+                    strongestEl.style.color = '#00ff88';
+                    weakestEl.textContent = `${subject.name} (${lowest}分) ✗`;
+                    weakestEl.style.color = '#ff4757';
+                    riskyEl.textContent = lowest < 90 ? `${subject.name} (${lowest}分) ⚠️` : '暂无';
+                    riskyEl.style.color = lowest < 90 ? '#ff6b35' : '#c8d6e5';
+                } else {
+                    const scoredSubjects = gradesData.subjects.filter(item => typeof item.totalScore === 'number');
+                    scoredSubjects.sort((a, b) => b.totalScore - a.totalScore);
+                    const strongest = scoredSubjects[0];
+                    const weakest = scoredSubjects[scoredSubjects.length - 1];
+                    const risky = scoredSubjects
+                        .filter(item => item.totalScore < 90)
+                        .sort((a, b) => a.totalScore - b.totalScore)[0];
+
+                    strongestEl.textContent = strongest ? `${strongest.name} (${strongest.totalScore}分) ✓` : '暂无';
+                    strongestEl.style.color = '#00ff88';
+                    weakestEl.textContent = weakest ? `${weakest.name} (${weakest.totalScore}分) ✗` : '暂无';
+                    weakestEl.style.color = '#ff4757';
+                    riskyEl.textContent = risky ? `${risky.name} (${risky.totalScore}分) ⚠️` : '暂无';
+                    riskyEl.style.color = risky ? '#ff6b35' : '#c8d6e5';
+                }
+
+                const detailText = document.getElementById('analysis-detail-text');
+                if (subject) {
+                    detailText.innerHTML = `<strong style="color: #ff6b35;">${subject.name}需要重点跟进。</strong> 建议根据最低分的考核点安排专项训练，强化基础知识掌握。`;
+                } else {
+                    const weakestSubjectName = weakestEl.textContent.split(' ')[0];
+                    detailText.innerHTML = `<strong style="color: #ff4757;">${weakestSubjectName}是当前最薄弱科目。</strong> 请优先安排复习时间，搭配模拟题查漏补缺。`;
+                }
+
+                const advice = document.getElementById('analysis-advice');
+                if (subject) {
+                    advice.innerHTML = `
+                        <p><strong style="color: #ff4757;">薄弱考核：</strong>复盘错题，建立错题本，确保同类题型不再失分。</p>
+                        <p><strong style="color: #ff6b35;">提升策略：</strong>每周至少安排2次专项训练，提升稳定性。</p>
+                        <p><strong style="color: #00d4ff;">巩固建议：</strong>保持高频复习，结合课堂笔记进行快速回顾。</p>
+                    `;
+                } else {
+                    advice.innerHTML = `
+                        <p><strong style="color: #ff4757;">重点科目：</strong>优先补强最低分科目，安排每日专项练习。</p>
+                        <p><strong style="color: #ff6b35;">稳中求进：</strong>对接近90分的科目进行针对性突破。</p>
+                        <p><strong style="color: #00d4ff;">保持优势：</strong>高分科目继续保持复习节奏，避免回落。</p>
+                    `;
+                }
+
+                const nextTargetEl = document.getElementById('analysis-next-target');
+                const finalTargetEl = document.getElementById('analysis-final-target');
+                const planText = document.getElementById('analysis-plan-text');
+                const nextTarget = average >= 90 ? '90-95分' : average >= 85 ? '88-92分' : '85-90分';
+                nextTargetEl.textContent = nextTarget;
+                nextTargetEl.style.color = '#f59e0b';
+                finalTargetEl.textContent = '90分以上';
+                finalTargetEl.style.color = '#00ff88';
+                planText.innerHTML = `<strong style="color: #ff4757;">${focusName}目标需要明确行动。</strong> 根据当前均分${average.toFixed(1)}分，建议制定分阶段计划，确保下次评估达成${nextTarget}。`;
             }
 
             setupAnimations() {
