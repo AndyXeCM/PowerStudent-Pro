@@ -963,3 +963,10 @@ class AcademicMonitoringSystem {
                     easing: 'easeOutQuart'
                 });
             }
+        });
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    new AcademicMonitoringSystem();
+});
