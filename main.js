@@ -11,6 +11,7 @@ class AcademicMonitoringSystem {
     init() {
         this.setupBackground();
         this.setupTimeDisplay();
+        this.ensureGpaCard();
         this.setupAnimations();
         this.generateSubjectCards();
         this.createAllCharts();
@@ -164,6 +165,7 @@ class AcademicMonitoringSystem {
 
     // 统计数字动画
     animateStats() {
+        this.updateGpaDisplay();
         const gpaScore = this.calculateGpaFromExams();
         const stats = [
             { element: '#gpa-score', target: gpaScore, decimals: 2 },
@@ -197,6 +199,32 @@ class AcademicMonitoringSystem {
                 }, index * 200);
             }
         });
+    }
+
+    ensureGpaCard() {
+        const statsOverview = document.getElementById('stats-overview');
+        if (!statsOverview || document.getElementById('gpa-score')) return;
+
+        const averageCard = document.getElementById('average-score')?.closest('.stat-card');
+        const gpaCard = document.createElement('div');
+        gpaCard.className = 'stat-card glow-blue';
+        gpaCard.innerHTML = `
+            <div class="stat-value gpa-score" id="gpa-score">--</div>
+            <div class="stat-label">GPA</div>
+        `;
+
+        if (averageCard) {
+            statsOverview.insertBefore(gpaCard, averageCard);
+        } else {
+            statsOverview.prepend(gpaCard);
+        }
+    }
+
+    updateGpaDisplay() {
+        const gpaElement = document.getElementById('gpa-score');
+        if (!gpaElement) return;
+        const gpa = this.calculateGpaFromExams();
+        gpaElement.textContent = gpa.toFixed(2);
     }
 
     calculateGpaFromExams() {
