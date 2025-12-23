@@ -619,6 +619,10 @@
             }
 
             setupBackground() {
+                if (typeof p5 === 'undefined') {
+                    return;
+                }
+
                 const sketch = (p) => {
                     let particles = [];
 
@@ -1131,6 +1135,18 @@
             }
 
             setupAnimations() {
+                const revealLoaded = () => {
+                    document.querySelectorAll('.loading').forEach(el => {
+                        el.classList.remove('loading');
+                        el.classList.add('loaded');
+                    });
+                };
+
+                if (typeof anime === 'undefined') {
+                    revealLoaded();
+                    return;
+                }
+
                 // 页面加载动画
                 anime({
                     targets: '.loading',
@@ -1139,12 +1155,7 @@
                     delay: anime.stagger(150),
                     duration: 800,
                     easing: 'easeOutQuart',
-                    complete: () => {
-                        document.querySelectorAll('.loading').forEach(el => {
-                            el.classList.remove('loading');
-                            el.classList.add('loaded');
-                        });
-                    }
+                    complete: revealLoaded
                 });
             }
         }

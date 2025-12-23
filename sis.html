@@ -34,11 +34,11 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 60px 20px 40px;
+            padding: 50px 20px 40px;
         }
 
         .login-card {
-            width: min(980px, 100%);
+            width: min(900px, 100%);
             background: #fff;
             border-radius: 4px;
             box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
@@ -47,7 +47,7 @@
 
         .card-header {
             background: var(--brand-blue);
-            padding: 18px 28px;
+            padding: 14px 26px;
             display: flex;
             align-items: center;
             gap: 12px;
@@ -55,8 +55,8 @@
         }
 
         .logo-mark {
-            width: 28px;
-            height: 28px;
+            width: 30px;
+            height: 30px;
             border: 2px solid #fff;
             border-radius: 6px;
             position: relative;
@@ -72,17 +72,17 @@
             font-size: 16px;
         }
 
-        .card-header span {
+        .logo-text {
             font-size: 18px;
             font-weight: 600;
         }
 
         .card-body {
-            padding: 28px 32px 36px;
+            padding: 26px 30px 34px;
         }
 
         .title {
-            font-size: 32px;
+            font-size: 28px;
             font-weight: 600;
             margin-bottom: 18px;
             color: #4a4a4a;
@@ -116,8 +116,8 @@
 
         .form-row {
             display: grid;
-            grid-template-columns: 200px 1fr;
-            gap: 24px;
+            grid-template-columns: 180px 1fr;
+            gap: 20px;
             align-items: center;
             padding: 14px 20px;
             border-bottom: 1px solid var(--border);
@@ -159,7 +159,7 @@
         }
 
         .submit-btn {
-            padding: 8px 16px;
+            padding: 7px 16px;
             border: none;
             border-radius: 6px;
             background: var(--link-blue);
@@ -173,7 +173,7 @@
         }
 
         .footer {
-            width: min(980px, 100%);
+            width: min(900px, 100%);
             margin-top: 24px;
             color: var(--text-muted);
             font-size: 13px;
@@ -208,15 +208,8 @@
     <div class="page">
         <div class="login-card">
             <div class="card-header">
-                <div class="logo-wrap">
-                    <svg class="logo-icon" viewBox="0 0 64 64" aria-hidden="true">
-                        <rect x="4" y="4" width="56" height="56" rx="10" fill="none" stroke="#ffffff" stroke-width="4"/>
-                        <path d="M26 18h12c8 0 14 6 14 14s-6 14-14 14h-6v10h-6V18zm12 6h-6v16h6c4.4 0 8-3.6 8-8s-3.6-8-8-8z" fill="#ffffff"/>
-                    </svg>
-                    <span class="logo-text">PowerSchool SIS</span>
-                </div>
                 <div class="logo-mark" aria-hidden="true"></div>
-                <span>PowerSchool SIS</span>
+                <span class="logo-text">PowerSchool SIS</span>
             </div>
             <div class="card-body">
                 <div class="title">Student and Parent Sign In</div>
