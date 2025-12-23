@@ -38,7 +38,7 @@
         }
 
         .login-card {
-            width: min(920px, 100%);
+            width: min(980px, 100%);
             background: #fff;
             border-radius: 4px;
             box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
@@ -47,35 +47,42 @@
 
         .card-header {
             background: var(--brand-blue);
-            padding: 16px 28px;
+            padding: 18px 28px;
             display: flex;
             align-items: center;
             gap: 12px;
             color: #fff;
         }
 
-        .logo-wrap {
-            display: flex;
-            align-items: center;
-            gap: 12px;
+        .logo-mark {
+            width: 28px;
+            height: 28px;
+            border: 2px solid #fff;
+            border-radius: 6px;
+            position: relative;
         }
 
-        .logo-icon {
-            width: 34px;
-            height: 34px;
+        .logo-mark::after {
+            content: "P";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -52%);
+            font-weight: 700;
+            font-size: 16px;
         }
 
-        .logo-text {
+        .card-header span {
             font-size: 18px;
             font-weight: 600;
         }
 
         .card-body {
-            padding: 30px 34px 36px;
+            padding: 28px 32px 36px;
         }
 
         .title {
-            font-size: 30px;
+            font-size: 32px;
             font-weight: 600;
             margin-bottom: 18px;
             color: #4a4a4a;
@@ -109,8 +116,8 @@
 
         .form-row {
             display: grid;
-            grid-template-columns: 190px 1fr;
-            gap: 22px;
+            grid-template-columns: 200px 1fr;
+            gap: 24px;
             align-items: center;
             padding: 14px 20px;
             border-bottom: 1px solid var(--border);
@@ -152,7 +159,7 @@
         }
 
         .submit-btn {
-            padding: 7px 16px;
+            padding: 8px 16px;
             border: none;
             border-radius: 6px;
             background: var(--link-blue);
@@ -166,7 +173,7 @@
         }
 
         .footer {
-            width: min(920px, 100%);
+            width: min(980px, 100%);
             margin-top: 24px;
             color: var(--text-muted);
             font-size: 13px;
@@ -208,6 +215,8 @@
                     </svg>
                     <span class="logo-text">PowerSchool SIS</span>
                 </div>
+                <div class="logo-mark" aria-hidden="true"></div>
+                <span>PowerSchool SIS</span>
             </div>
             <div class="card-body">
                 <div class="title">Student and Parent Sign In</div>
