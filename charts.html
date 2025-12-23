@@ -698,10 +698,19 @@
                 const chart = echarts.init(chartDom);
                 this.charts.trend = chart;
 
-                // 模拟趋势数据和预测
-                const dates = ['第1次', '第2次', '第3次', '第4次', '第5次', '第6次', '预测1', '预测2'];
-                const actualData = [82, 84, 86, 85, 87, 89, null, null];
-                const predictedData = [null, null, null, null, null, 89, 90, 91];
+                this.updateTrendChart();
+            }
+
+            updateTrendChart() {
+                if (!this.charts.trend) {
+                    return;
+                }
+
+                const { labels, actualData, predictedData, averageValue } = this.buildTrendData();
+
+                const valueSamples = [...actualData, ...predictedData].filter(value => typeof value === 'number');
+                const minValue = valueSamples.length ? Math.max(0, Math.floor(Math.min(...valueSamples) - 10)) : 0;
+                const maxValue = valueSamples.length ? Math.min(100, Math.ceil(Math.max(...valueSamples) + 10)) : 100;
 
                 const option = {
                     backgroundColor: 'transparent',
@@ -723,14 +732,14 @@
                     },
                     xAxis: {
                         type: 'category',
-                        data: dates,
+                        data: labels,
                         axisLine: { lineStyle: { color: '#666' } },
                         axisLabel: { color: '#fff' }
                     },
                     yAxis: {
                         type: 'value',
-                        min: 75,
-                        max: 95,
+                        min: minValue,
+                        max: maxValue,
                         axisLine: { lineStyle: { color: '#666' } },
                         axisLabel: { color: '#fff' },
                         splitLine: { lineStyle: { color: '#333' } }
@@ -765,14 +774,73 @@
                         {
                             name: '平均分线',
                             type: 'line',
-                            data: new Array(dates.length).fill(86),
+                            data: new Array(labels.length).fill(averageValue),
                             lineStyle: { color: '#8b5cf6', type: 'dashed', width: 2 },
                             symbol: 'none'
                         }
                     ]
                 };
 
-                chart.setOption(option);
+                this.charts.trend.setOption(option);
+            }
+
+            buildTrendData() {
+                if (this.currentSubject === 'all') {
+                    const subjects = gradesData.subjects.filter(subject => typeof subject.totalScore === 'number');
+                    const labels = subjects.map(subject => subject.name);
+                    const actualData = subjects.map(subject => subject.totalScore);
+                    const averageValue = actualData.length
+                        ? actualData.reduce((sum, score) => sum + score, 0) / actualData.length
+                        : gradesData.averageScore;
+
+                    return {
+                        labels,
+                        actualData,
+                        predictedData: new Array(labels.length).fill(null),
+                        averageValue
+                    };
+                }
+
+                const subject = gradesData.subjects.find(item => item.id === this.currentSubject);
+                if (!subject) {
+                    return {
+                        labels: [],
+                        actualData: [],
+                        predictedData: [],
+                        averageValue: gradesData.averageScore
+                    };
+                }
+
+                let exams = subject.exams.filter(exam => typeof exam.score === 'number');
+                if (this.currentTimeRange === 'recent') {
+                    exams = exams.slice(-3);
+                }
+
+                const labels = exams.map(exam => exam.name);
+                const normalizedScores = exams.map(exam => Math.round((exam.score / exam.fullScore) * 100));
+                const actualData = [...normalizedScores];
+                const averageValue = normalizedScores.length
+                    ? normalizedScores.reduce((sum, score) => sum + score, 0) / normalizedScores.length
+                    : gradesData.averageScore;
+
+                let predictedData = new Array(actualData.length).fill(null);
+                if (normalizedScores.length >= 2) {
+                    const last = normalizedScores[normalizedScores.length - 1];
+                    const prev = normalizedScores[normalizedScores.length - 2];
+                    const delta = last - prev;
+                    const next1 = Math.min(100, Math.max(0, Math.round(last + delta)));
+                    const next2 = Math.min(100, Math.max(0, Math.round(next1 + delta)));
+                    labels.push('预测1', '预测2');
+                    actualData.push(null, null);
+                    predictedData = predictedData.concat([next1, next2]);
+                }
+
+                return {
+                    labels,
+                    actualData,
+                    predictedData,
+                    averageValue
+                };
             }
 
             createGradeDistributionChart() {
@@ -1137,6 +1205,7 @@
                     easing: 'easeOutQuart'
                 });
 
+                this.updateTrendChart();
                 this.updateAnalysisSection();
             }
 
