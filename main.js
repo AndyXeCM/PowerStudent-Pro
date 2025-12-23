@@ -164,7 +164,9 @@ class AcademicMonitoringSystem {
 
     // 统计数字动画
     animateStats() {
+        const gpaScore = this.calculateGpaFromExams();
         const stats = [
+            { element: '#gpa-score', target: gpaScore, decimals: 2 },
             { element: '#average-score', target: 89 },
             { element: '#highest-score', target: 95 },
             { element: '#lowest-score', target: 84 },
@@ -186,12 +188,43 @@ class AcademicMonitoringSystem {
                             const value = anim.animatables[0].target.value;
                             const prefix = stat.prefix || '';
                             const suffix = stat.suffix || '';
-                            element.textContent = prefix + Math.round(value * 10) / 10 + suffix;
+                            const decimals = stat.decimals ?? 1;
+                            const factor = 10 ** decimals;
+                            const displayValue = Math.round(value * factor) / factor;
+                            element.textContent = prefix + displayValue + suffix;
                         }
                     });
                 }, index * 200);
             }
         });
+    }
+
+    calculateGpaFromExams() {
+        const examScores = [];
+        gradesData.subjects.forEach(subject => {
+            subject.exams.forEach(exam => {
+                if (typeof exam.score === 'number' && typeof exam.fullScore === 'number' && exam.fullScore > 0) {
+                    const percent = (exam.score / exam.fullScore) * 100;
+                    examScores.push(percent);
+                }
+            });
+        });
+
+        if (examScores.length === 0) return 0;
+
+        const totalGpa = examScores
+            .map(score => this.convertPercentToGpa(score))
+            .reduce((sum, gpa) => sum + gpa, 0);
+
+        return totalGpa / examScores.length;
+    }
+
+    convertPercentToGpa(percent) {
+        if (percent >= 90) return 4.0;
+        if (percent >= 80) return 3.0;
+        if (percent >= 70) return 2.0;
+        if (percent >= 60) return 1.0;
+        return 0.0;
     }
 
     // 生成科目卡片
