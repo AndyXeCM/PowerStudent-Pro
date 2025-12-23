@@ -312,6 +312,7 @@
         .grade-aminus { background: rgba(0, 168, 255, 0.2); color: #00a8ff; }
         .grade-bplus { background: rgba(139, 92, 246, 0.2); color: var(--neon-purple); }
         .grade-b { background: rgba(168, 85, 247, 0.2); color: #a855f7; }
+        .grade-pass { background: rgba(0, 212, 255, 0.15); color: var(--neon-blue); }
 
         .score-cell {
             font-family: 'JetBrains Mono', monospace;
@@ -1089,20 +1090,26 @@
                 gradesData.subjects.forEach(subject => {
                     subject.exams.forEach(exam => {
                         const row = document.createElement('tr');
-                        const gradeInfo = getGradeLevel(exam.score);
-                        const percentage = Math.round((exam.score / exam.fullScore) * 100);
-                        const diffFromAverage = exam.score - gradesData.averageScore;
-                        
+                        const isScoreMissing = exam.score === null || exam.score === undefined;
+                        const gradeInfo = isScoreMissing ? null : getGradeLevel(exam.score);
+                        const percentage = isScoreMissing ? '--' : `${Math.round((exam.score / exam.fullScore) * 100)}%`;
+                        const diffFromAverage = isScoreMissing ? '--' : exam.score - gradesData.averageScore;
+                        const scoreDisplay = isScoreMissing ? (exam.displayScore || 'N/A') : exam.score;
+                        const gradeDisplay = isScoreMissing ? (exam.displayScore || 'PASS') : gradeInfo.grade;
+                        const gradeClass = isScoreMissing
+                            ? 'grade-pass'
+                            : `grade-${gradeInfo.grade.toLowerCase().replace('+', 'plus').replace('-', 'minus')}`;
+
                         row.innerHTML = `
                             <td>${subject.name}</td>
                             <td>${exam.name}</td>
-                            <td class="score-cell">${exam.score}</td>
+                            <td class="score-cell">${scoreDisplay}</td>
                             <td>${exam.fullScore}</td>
-                            <td><span class="grade-cell grade-${gradeInfo.grade.toLowerCase().replace('+', 'plus').replace('-', 'minus')}">${gradeInfo.grade}</span></td>
-                            <td class="score-cell">${percentage}%</td>
-                            <td class="score-cell" style="color: ${diffFromAverage >= 0 ? '#00ff88' : '#ff4757'}">${diffFromAverage > 0 ? '+' : ''}${diffFromAverage}</td>
+                            <td><span class="grade-cell ${gradeClass}">${gradeDisplay}</span></td>
+                            <td class="score-cell">${percentage}</td>
+                            <td class="score-cell" style="color: ${diffFromAverage === '--' ? '#c8d6e5' : diffFromAverage >= 0 ? '#00ff88' : '#ff4757'}">${diffFromAverage === '--' ? '--' : `${diffFromAverage > 0 ? '+' : ''}${diffFromAverage}`}</td>
                         `;
-                        
+
                         tbody.appendChild(row);
                     });
                 });
