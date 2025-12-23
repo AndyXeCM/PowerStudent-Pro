@@ -210,7 +210,7 @@ class AcademicMonitoringSystem {
         gpaCard.className = 'stat-card glow-blue';
         gpaCard.innerHTML = `
             <div class="stat-value gpa-score" id="gpa-score">--</div>
-            <div class="stat-label">GPA（4.0制）</div>
+            <div class="stat-label">GPA</div>
         `;
 
         if (averageCard) {
