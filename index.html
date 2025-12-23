@@ -63,6 +63,9 @@
             background: linear-gradient(135deg, rgba(10, 14, 39, 0.9), rgba(26, 31, 58, 0.8));
             backdrop-filter: blur(10px);
             border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .main-title {
@@ -85,9 +88,8 @@
         }
 
         .user-info {
-            position: absolute;
-            top: 2rem;
-            right: 2rem;
+            position: relative;
+            margin-top: 1.5rem;
             display: flex;
             align-items: center;
             gap: 1rem;
@@ -96,6 +98,8 @@
             border: 1px solid var(--glass-border);
             border-radius: 15px;
             backdrop-filter: blur(10px);
+            width: min(820px, 90%);
+            justify-content: center;
         }
 
         .user-avatar {

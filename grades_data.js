@@ -146,7 +146,7 @@ const gradesData = {
                 { name: 'Project', score: 96, fullScore: 100 },
                 { name: '期末考', score: 78, fullScore: 100 }
             ],
-            totalScore: 76,
+            totalScore: 84,
             hasTotal: true
         }
     ]
